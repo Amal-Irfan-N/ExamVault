@@ -38,10 +38,11 @@ export function OfflineStorageModal() {
     clearOfflineCache,
     refreshMetrics,
     lastSyncTime,
+    auditLog,
   } = useOffline();
 
   const [syncFeedback, setSyncFeedback] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"overview" | "queue">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "queue" | "conflicts">("overview");
 
   const formatBytes = (bytes: number): string => {
     if (bytes === 0) return "0 Bytes";
@@ -130,6 +131,22 @@ export function OfflineStorageModal() {
               {pendingCount > 0 && (
                 <span className="px-1.5 py-0.2 bg-amber-500 text-slate-950 font-bold rounded-full text-[10px]">
                   {pendingCount}
+                </span>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("conflicts")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                activeTab === "conflicts"
+                  ? "bg-indigo-600 text-white font-semibold shadow-sm"
+                  : "bg-slate-800/50 text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              Conflict & Sync Log
+              {auditLog.length > 0 && (
+                <span className="px-1.5 py-0.2 bg-indigo-500/30 text-indigo-300 font-mono text-[10px] rounded-full border border-indigo-500/40">
+                  {auditLog.length}
                 </span>
               )}
             </button>
@@ -304,6 +321,64 @@ export function OfflineStorageModal() {
                       <span className="px-2 py-1 bg-slate-800 text-slate-400 rounded text-[10px] font-mono shrink-0">
                         Pending
                       </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === "conflicts" && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-xs font-semibold text-slate-300">
+                    Conflict Resolution & Sync Audit Log
+                  </h4>
+                  <p className="text-[11px] text-slate-400 mt-0.5">
+                    Deterministic timestamp-based (Last-Write-Wins) reconciliation between IndexedDB and Supabase PostgreSQL.
+                  </p>
+                </div>
+              </div>
+
+              {auditLog.length === 0 ? (
+                <div className="text-center py-10 bg-slate-900/30 rounded-xl border border-dashed border-slate-800">
+                  <CheckCircle2 className="h-8 w-8 text-indigo-400 mx-auto mb-2" />
+                  <p className="text-xs font-medium text-slate-300">Harmonic Alignment</p>
+                  <p className="text-[11px] text-slate-500 mt-1">
+                    No sync conflicts detected. Local IndexedDB and Cloud database state are identical.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2.5 max-h-[300px] overflow-y-auto pr-1">
+                  {auditLog.map((log) => (
+                    <div
+                      key={log.id}
+                      className="p-3 rounded-lg bg-slate-900/60 border border-slate-800 space-y-1.5 text-xs"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold uppercase ${
+                              log.winner === "local"
+                                ? "bg-emerald-950 text-emerald-300 border border-emerald-800/60"
+                                : "bg-blue-950 text-blue-300 border border-blue-800/60"
+                            }`}
+                          >
+                            {log.winner === "local" ? "Local Record Won" : "Cloud Record Won"}
+                          </span>
+                          <span className="text-slate-300 font-semibold capitalize">
+                            {log.entity}: {log.entityId}
+                          </span>
+                        </div>
+                        <span className="text-[10px] text-slate-500 font-mono">
+                          {new Date(log.resolvedAt).toLocaleTimeString()}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-400 leading-relaxed">{log.details}</p>
+                      <div className="flex items-center gap-2 text-[10px] text-slate-500 pt-0.5">
+                        <span className="font-mono bg-slate-800 px-1 rounded">Strategy: {log.strategy}</span>
+                      </div>
                     </div>
                   ))}
                 </div>

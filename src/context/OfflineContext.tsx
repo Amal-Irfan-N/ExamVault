@@ -7,6 +7,7 @@ import {
   OfflineMutation,
   CachedBlob,
 } from "@/lib/db/indexed-db";
+import { runCloudSync, SyncAuditItem } from "@/lib/sync/sync-engine";
 
 interface StorageMetricsData {
   usageBytes: number;
@@ -44,6 +45,7 @@ interface OfflineContextType {
   lastSyncTime: string | null;
   reconnectedNotice: boolean;
   dismissReconnectedNotice: () => void;
+  auditLog: SyncAuditItem[];
 }
 
 const OfflineContext = createContext<OfflineContextType | undefined>(undefined);
@@ -63,6 +65,7 @@ export function OfflineProvider({ children }: { children: React.ReactNode }) {
   const [isStorageModalOpen, setIsStorageModalOpen] = useState<boolean>(false);
   const [lastSyncTime, setLastSyncTime] = useState<string | null>(null);
   const [reconnectedNotice, setReconnectedNotice] = useState<boolean>(false);
+  const [auditLog, setAuditLog] = useState<SyncAuditItem[]>([]);
   const [, startTransition] = useTransition();
 
   const [storageMetrics, setStorageMetrics] = useState<StorageMetricsData>({
@@ -101,7 +104,7 @@ export function OfflineProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Sync pending mutations to server / mark synced
+  // Sync pending mutations to server / reconcile cloud records
   const syncPendingMutations = useCallback(async (): Promise<{
     success: boolean;
     syncedCount: number;
@@ -109,45 +112,16 @@ export function OfflineProvider({ children }: { children: React.ReactNode }) {
   }> => {
     setIsSyncing(true);
     try {
-      const pending = await examVaultDB.offlineMutations
-        .where("status")
-        .equals("pending")
-        .toArray();
-
-      if (pending.length === 0) {
-        setIsSyncing(false);
-        setLastSyncTime(new Date().toLocaleTimeString());
-        return { success: true, syncedCount: 0, message: "All local changes are already synchronized." };
-      }
-
-      // Simulate network sync roundtrip with backend
-      await new Promise((resolve) => setTimeout(resolve, 800));
-
-      // Mark all pending as synced
-      await examVaultDB.offlineMutations.where("status").equals("pending").modify({ status: "syncing" });
-
-      // Update syncStatus on entity tables
-      for (const item of pending) {
-        if (item.entity === "examination") {
-          await examVaultDB.examinations.update(item.entityId, { syncStatus: "synced" });
-        } else if (item.entity === "document") {
-          await examVaultDB.documents.update(item.entityId, { syncStatus: "synced" });
-        } else if (item.entity === "credential") {
-          await examVaultDB.credentials.update(item.entityId, { syncStatus: "synced" });
-        }
-      }
-
-      // Clear completed mutations
-      await examVaultDB.offlineMutations.where("status").equals("syncing").delete();
-
-      setLastSyncTime(new Date().toLocaleTimeString());
+      const result = await runCloudSync("user-demo-1", false);
+      setLastSyncTime(result.timestamp);
+      setAuditLog((prev) => [...result.auditLog, ...prev].slice(0, 50));
       await refreshMetrics();
       setIsSyncing(false);
 
       return {
-        success: true,
-        syncedCount: pending.length,
-        message: `Successfully synchronized ${pending.length} change${pending.length > 1 ? "s" : ""} to ExamVault Cloud.`,
+        success: result.success,
+        syncedCount: result.syncedExams + result.syncedDocs + result.syncedCreds,
+        message: result.message,
       };
     } catch (err) {
       setIsSyncing(false);
@@ -155,7 +129,7 @@ export function OfflineProvider({ children }: { children: React.ReactNode }) {
       return {
         success: false,
         syncedCount: 0,
-        message: "Failed to synchronize changes. Please check your network connection.",
+        message: "Failed to synchronize changes. Offline modifications remain queued locally.",
       };
     }
   }, [refreshMetrics]);
@@ -298,6 +272,7 @@ export function OfflineProvider({ children }: { children: React.ReactNode }) {
         lastSyncTime,
         reconnectedNotice,
         dismissReconnectedNotice,
+        auditLog,
       }}
     >
       {children}
