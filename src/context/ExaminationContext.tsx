@@ -7,6 +7,7 @@ import {
   DashboardStats,
   UpcomingDeadlineItem,
   UpcomingExamDateItem,
+  ExamStatus,
 } from "@/types/examination";
 import {
   INITIAL_MOCK_EXAMINATIONS,
@@ -17,12 +18,31 @@ import {
 } from "@/data/mockExaminations";
 import { examVaultDB, seedDatabaseIfEmpty, LocalExamination } from "@/lib/db/indexed-db";
 
+export const DEFAULT_CATEGORIES = [
+  "UPSC",
+  "SSC",
+  "ISRO",
+  "GATE",
+  "RRB",
+  "DRDO",
+  "State PSC",
+  "Banking",
+  "Defence",
+  "PSU",
+];
+
 interface ExaminationContextType {
   examinations: Examination[];
   activities: ExamActivity[];
   addExamination: (exam: Omit<Examination, "id" | "userId" | "createdAt" | "updatedAt">) => Examination;
   updateExamination: (id: string, updates: Partial<Examination>) => void;
   deleteExamination: (id: string) => void;
+  toggleExamCompletion: (id: string) => void;
+  resetToSampleExaminations: () => void;
+  categories: string[];
+  addCategory: (name: string) => boolean;
+  removeCategory: (name: string) => void;
+  resetCategories: () => void;
   selectedYear: string;
   setSelectedYear: (year: string) => void;
   selectedStatus: string;
@@ -50,13 +70,33 @@ export function ExaminationProvider({ children }: { children: React.ReactNode })
       const saved = localStorage.getItem("examvault_exams");
       if (saved) {
         try {
-          return JSON.parse(saved);
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            return parsed;
+          }
         } catch {
           return INITIAL_MOCK_EXAMINATIONS;
         }
       }
     }
     return INITIAL_MOCK_EXAMINATIONS;
+  });
+
+  const [categories, setCategories] = useState<string[]>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("examvault_categories");
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            return parsed;
+          }
+        } catch {
+          return DEFAULT_CATEGORIES;
+        }
+      }
+    }
+    return DEFAULT_CATEGORIES;
   });
 
   const [activities, setActivities] = useState<ExamActivity[]>(MOCK_ACTIVITIES);
@@ -66,6 +106,13 @@ export function ExaminationProvider({ children }: { children: React.ReactNode })
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isQuickAddOpen, setIsQuickAddOpen] = useState<boolean>(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState<boolean>(false);
+
+  // Sync categories with localStorage
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("examvault_categories", JSON.stringify(categories));
+    }
+  }, [categories]);
 
   // Load from IndexedDB on initial mount
   useEffect(() => {
@@ -77,6 +124,10 @@ export function ExaminationProvider({ children }: { children: React.ReactNode })
           setExaminations(list as unknown as Examination[]);
         } else {
           await seedDatabaseIfEmpty(INITIAL_MOCK_EXAMINATIONS, [], []);
+          setExaminations(INITIAL_MOCK_EXAMINATIONS);
+          if (typeof window !== "undefined") {
+            localStorage.setItem("examvault_exams", JSON.stringify(INITIAL_MOCK_EXAMINATIONS));
+          }
         }
       } catch (err) {
         console.warn("IndexedDB load error, fallback to localStorage:", err);
@@ -125,6 +176,53 @@ export function ExaminationProvider({ children }: { children: React.ReactNode })
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
+
+  const addCategory = (name: string): boolean => {
+    const trimmed = name.trim();
+    if (!trimmed) return false;
+    const exists = categories.some((c) => c.toLowerCase() === trimmed.toLowerCase());
+    if (exists) return false;
+    setCategories((prev) => [...prev, trimmed]);
+    return true;
+  };
+
+  const removeCategory = (name: string) => {
+    setCategories((prev) => prev.filter((c) => c.toLowerCase() !== name.toLowerCase()));
+    if (selectedCategory.toLowerCase() === name.toLowerCase()) {
+      setSelectedCategory("all");
+    }
+  };
+
+  const resetCategories = () => {
+    setCategories(DEFAULT_CATEGORIES);
+  };
+
+  const resetToSampleExaminations = () => {
+    setExaminations(INITIAL_MOCK_EXAMINATIONS);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("examvault_exams", JSON.stringify(INITIAL_MOCK_EXAMINATIONS));
+    }
+    const localItems: LocalExamination[] = INITIAL_MOCK_EXAMINATIONS.map((exam) => ({
+      id: exam.id,
+      examName: exam.examName,
+      recruitingOrg: exam.recruitingOrg,
+      category: exam.category,
+      postName: exam.postName,
+      advertisementNumber: exam.advertisementNumber,
+      recruitmentYear: exam.recruitmentYear,
+      applicationStatus: exam.status,
+      paymentStatus: exam.paymentStatus,
+      examDate: exam.examDate?.date || undefined,
+      dateCertainty: exam.examDate?.certainty || undefined,
+      isArchived: exam.isArchived || false,
+      updatedAt: exam.updatedAt || new Date().toISOString(),
+      syncStatus: "synced",
+      fullData: exam,
+    }));
+    examVaultDB.examinations.clear().then(() => {
+      examVaultDB.examinations.bulkPut(localItems);
+    }).catch((e) => console.warn("Reset IndexedDB error:", e));
+  };
 
   const addExamination = (newExamData: Omit<Examination, "id" | "userId" | "createdAt" | "updatedAt">): Examination => {
     const newExam: Examination = {
@@ -189,6 +287,44 @@ export function ExaminationProvider({ children }: { children: React.ReactNode })
     }
   };
 
+  const toggleExamCompletion = (id: string) => {
+    setExaminations((prev) =>
+      prev.map((exam) => {
+        if (exam.id !== id) return exam;
+        const willBeCompleted = !exam.isCompleted;
+        const newStatus = willBeCompleted
+          ? (["result_published", "qualified", "not_qualified", "selected", "not_selected"].includes(exam.status)
+              ? exam.status
+              : "examination_completed")
+          : (exam.status === "examination_completed" ? "examination_scheduled" : exam.status);
+
+        const updated: Examination = {
+          ...exam,
+          isCompleted: willBeCompleted,
+          status: newStatus as ExamStatus,
+          updatedAt: new Date().toISOString(),
+        };
+
+        if (typeof window !== "undefined" && !navigator.onLine) {
+          examVaultDB.offlineMutations
+            .add({
+              id: `mut-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+              entity: "examination",
+              entityId: id,
+              action: "update",
+              payload: { isCompleted: willBeCompleted, status: newStatus },
+              timestamp: Date.now(),
+              status: "pending",
+              retryCount: 0,
+            })
+            .catch(() => {});
+        }
+
+        return updated;
+      })
+    );
+  };
+
   const deleteExamination = (id: string) => {
     setExaminations((prev) => prev.filter((exam) => exam.id !== id));
     examVaultDB.examinations.delete(id).catch((e) => console.warn("IndexedDB delete error:", e));
@@ -212,15 +348,13 @@ export function ExaminationProvider({ children }: { children: React.ReactNode })
   // Filtered examinations
   const filteredExaminations = useMemo(() => {
     return examinations.filter((exam) => {
-      if (exam.isArchived) return false;
-
       // Year filter
       if (selectedYear !== "all" && exam.recruitmentYear.toString() !== selectedYear) {
         return false;
       }
 
       // Category filter
-      if (selectedCategory !== "all" && exam.category !== selectedCategory) {
+      if (selectedCategory !== "all" && exam.category.toLowerCase() !== selectedCategory.toLowerCase()) {
         return false;
       }
 
@@ -270,6 +404,12 @@ export function ExaminationProvider({ children }: { children: React.ReactNode })
         addExamination,
         updateExamination,
         deleteExamination,
+        toggleExamCompletion,
+        resetToSampleExaminations,
+        categories,
+        addCategory,
+        removeCategory,
+        resetCategories,
         selectedYear,
         setSelectedYear,
         selectedStatus,

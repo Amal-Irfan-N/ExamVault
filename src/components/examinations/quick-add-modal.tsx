@@ -30,7 +30,7 @@ const ORG_OPTIONS: { name: string; category: ExamCategory }[] = [
 ];
 
 export function QuickAddModal() {
-  const { isQuickAddOpen, setIsQuickAddOpen, addExamination } = useExaminations();
+  const { isQuickAddOpen, setIsQuickAddOpen, addExamination, categories } = useExaminations();
 
   const [examName, setExamName] = useState("");
   const [recruitingOrg, setRecruitingOrg] = useState("UPSC");
@@ -197,25 +197,32 @@ export function QuickAddModal() {
                 >
                   {ORG_OPTIONS.map((o) => (
                     <option key={o.name} value={o.name}>
-                      {o.name} ({o.category})
+                      {o.name}
                     </option>
                   ))}
                 </select>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="sm:col-span-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
                 <label className="block text-slate-300 font-medium mb-1">
-                  Post Name *
+                  Category Tag
                 </label>
-                <Input
-                  required
-                  placeholder="e.g. Assistant Section Officer / Inspector"
-                  value={postName}
-                  onChange={(e) => setPostName(e.target.value)}
-                  className="bg-[#0b0e14] border-[#1e2536] text-xs"
-                />
+                <select
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value as ExamCategory)}
+                  className="flex h-9 w-full rounded-lg border border-[#1e2536] bg-[#0b0e14] px-3 py-1 text-xs text-slate-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-500"
+                >
+                  {categories.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                  {!categories.includes(category) && (
+                    <option value={category}>{category}</option>
+                  )}
+                </select>
               </div>
 
               <div>
@@ -231,16 +238,31 @@ export function QuickAddModal() {
               </div>
             </div>
 
-            <div>
-              <label className="block text-slate-300 font-medium mb-1">
-                Advertisement / Notice Number
-              </label>
-              <Input
-                placeholder="e.g. 05/2026-CSP or CEN 05/2026"
-                value={advertisementNumber}
-                onChange={(e) => setAdvertisementNumber(e.target.value)}
-                className="bg-[#0b0e14] border-[#1e2536] text-xs font-mono"
-              />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-slate-300 font-medium mb-1">
+                  Post Name *
+                </label>
+                <Input
+                  required
+                  placeholder="e.g. Assistant Section Officer / Inspector"
+                  value={postName}
+                  onChange={(e) => setPostName(e.target.value)}
+                  className="bg-[#0b0e14] border-[#1e2536] text-xs"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-medium mb-1">
+                  Advertisement / Notice Number
+                </label>
+                <Input
+                  placeholder="e.g. 05/2026-CSP or CEN 05/2026"
+                  value={advertisementNumber}
+                  onChange={(e) => setAdvertisementNumber(e.target.value)}
+                  className="bg-[#0b0e14] border-[#1e2536] text-xs font-mono"
+                />
+              </div>
             </div>
           </div>
 

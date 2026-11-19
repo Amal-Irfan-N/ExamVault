@@ -88,6 +88,7 @@ export interface Examination {
   // Overall status & timestamps
   status: ExamStatus;
   isArchived: boolean;
+  isCompleted?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -133,4 +134,19 @@ export interface DashboardStats {
   pendingAnswerKeys: number;
   availableHallTickets: number;
   upcomingApplicationDeadlines: number;
+}
+
+export function isExamCompleted(exam: Examination): boolean {
+  if (typeof exam.isCompleted === 'boolean') {
+    return exam.isCompleted;
+  }
+  const completedStatuses: ExamStatus[] = [
+    'examination_completed',
+    'result_published',
+    'qualified',
+    'not_qualified',
+    'selected',
+    'not_selected',
+  ];
+  return completedStatuses.includes(exam.status);
 }

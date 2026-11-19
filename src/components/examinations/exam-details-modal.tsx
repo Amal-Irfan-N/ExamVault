@@ -1,14 +1,13 @@
 "use client";
 
 import React, { useState } from "react";
-import { Examination, ExamStatus } from "@/types/examination";
+import { Examination, ExamStatus, isExamCompleted } from "@/types/examination";
 import { StatusBadge, CertaintyBadge } from "@/components/ui/status-badge";
 import { formatDate } from "@/lib/utils";
 import {
   X,
   Edit,
   Trash2,
-  Archive,
   ExternalLink,
   Building2,
   Hash,
@@ -16,6 +15,8 @@ import {
   Award,
   Layers,
   Milestone,
+  CheckCircle2,
+  RotateCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -26,7 +27,8 @@ interface ExamDetailsModalProps {
   exam: Examination | null;
   onEdit: (exam: Examination) => void;
   onDelete: (exam: Examination) => void;
-  onToggleArchive: (exam: Examination) => void;
+  onToggleArchive?: (exam: Examination) => void;
+  onToggleCompletion?: (exam: Examination) => void;
   onUpdateStatus: (examId: string, newStatus: ExamStatus) => void;
   onClose: () => void;
 }
@@ -37,6 +39,7 @@ export function ExamDetailsModal({
   onEdit,
   onDelete,
   onToggleArchive,
+  onToggleCompletion,
   onUpdateStatus,
   onClose,
 }: ExamDetailsModalProps) {
@@ -76,9 +79,13 @@ export function ExamDetailsModal({
               </Badge>
               <span className="text-xs text-slate-500">Year {exam.recruitmentYear}</span>
               <StatusBadge status={exam.status} />
-              {exam.isArchived && (
-                <Badge variant="secondary" className="text-[10px]">
-                  Archived Record
+              {isExamCompleted(exam) ? (
+                <Badge className="bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[10px]">
+                  Completed
+                </Badge>
+              ) : (
+                <Badge className="bg-indigo-500/15 text-indigo-400 border border-indigo-500/30 text-[10px]">
+                  Active
                 </Badge>
               )}
             </div>
@@ -363,11 +370,20 @@ export function ExamDetailsModal({
             <Button
               type="button"
               variant="outline"
-              onClick={() => onToggleArchive(exam)}
+              onClick={() => (onToggleCompletion ? onToggleCompletion(exam) : onToggleArchive?.(exam))}
               className="text-xs h-8 px-3 gap-1.5 cursor-pointer"
             >
-              <Archive className="w-3.5 h-3.5 text-slate-400" />
-              {exam.isArchived ? "Unarchive" : "Archive"}
+              {isExamCompleted(exam) ? (
+                <>
+                  <RotateCcw className="w-3.5 h-3.5 text-amber-400" />
+                  Mark as Active
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                  Mark as Completed
+                </>
+              )}
             </Button>
 
             <Button

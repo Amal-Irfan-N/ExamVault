@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { Examination, ExamCategory, ExamStatus, DateCertainty } from "@/types/examination";
+import { Examination, ExamCategory, ExamStatus, DateCertainty, isExamCompleted } from "@/types/examination";
+import { useExaminations } from "@/context/ExaminationContext";
 import {
   X,
   Edit,
@@ -44,6 +45,8 @@ function EditExamFormContent({
   onSave: (id: string, updates: Partial<Examination>) => void;
   onClose: () => void;
 }) {
+  const { categories } = useExaminations();
+
   // A. Basic Info
   const [examName, setExamName] = useState(exam.examName || "");
   const [recruitingOrg, setRecruitingOrg] = useState(exam.recruitingOrg || "UPSC");
@@ -85,9 +88,9 @@ function EditExamFormContent({
     exam.finalSelectionStatus || "pending"
   );
 
-  // Status & Archive
+  // Status & Completion
   const [status, setStatus] = useState<ExamStatus>(exam.status || "interested");
-  const [isArchived, setIsArchived] = useState<boolean>(Boolean(exam.isArchived));
+  const [isCompleted, setIsCompleted] = useState<boolean>(isExamCompleted(exam));
   const [isSaved, setIsSaved] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -133,7 +136,8 @@ function EditExamFormContent({
       finalSelectionStatus: selectionStatus,
 
       status,
-      isArchived,
+      isCompleted,
+      isArchived: false,
     });
 
     setIsSaved(true);
@@ -187,24 +191,32 @@ function EditExamFormContent({
             >
               {ORG_OPTIONS.map((o) => (
                 <option key={o.name} value={o.name}>
-                  {o.name} ({o.category})
+                  {o.name}
                 </option>
               ))}
             </select>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div className="sm:col-span-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
             <label className="block text-slate-300 font-medium mb-1">
-              Post Name *
+              Category Tag
             </label>
-            <Input
-              required
-              value={postName}
-              onChange={(e) => setPostName(e.target.value)}
-              className="bg-[#0b0e14] border-[#1e2536] text-xs"
-            />
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value as ExamCategory)}
+              className="flex h-9 w-full rounded-lg border border-[#1e2536] bg-[#0b0e14] px-3 py-1 text-xs text-slate-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-500"
+            >
+              {categories.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+              {!categories.includes(category) && (
+                <option value={category}>{category}</option>
+              )}
+            </select>
           </div>
 
           <div>
@@ -218,6 +230,18 @@ function EditExamFormContent({
               className="bg-[#0b0e14] border-[#1e2536] text-xs"
             />
           </div>
+        </div>
+
+        <div>
+          <label className="block text-slate-300 font-medium mb-1">
+            Post Name *
+          </label>
+          <Input
+            required
+            value={postName}
+            onChange={(e) => setPostName(e.target.value)}
+            className="bg-[#0b0e14] border-[#1e2536] text-xs"
+          />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -543,19 +567,19 @@ function EditExamFormContent({
 
         <div className="pt-2 flex items-center justify-between border-t border-[#1a2133]">
           <div>
-            <span className="font-semibold text-white block">Archive Examination</span>
+            <span className="font-semibold text-white block">Completed Examination</span>
             <span className="text-[11px] text-slate-400">
-              Archived examinations are kept in historical records but hidden from active dashboard counts.
+              Mark this examination as completed to move it to the Completed Examinations section.
             </span>
           </div>
           <label className="relative inline-flex items-center cursor-pointer">
             <input
               type="checkbox"
-              checked={isArchived}
-              onChange={(e) => setIsArchived(e.target.checked)}
+              checked={isCompleted}
+              onChange={(e) => setIsCompleted(e.target.checked)}
               className="sr-only peer"
             />
-            <div className="w-11 h-6 bg-[#1a2133] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600" />
+            <div className="w-11 h-6 bg-[#1a2133] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600" />
           </label>
         </div>
       </div>
