@@ -121,8 +121,8 @@ export function Topbar({ onToggleMobileMenu, isMobileMenuOpen }: TopbarProps) {
           >
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
             <span className="font-semibold text-white group-hover:text-indigo-200 hidden sm:inline">Live Progress</span>
-            <span className="text-[10px] text-indigo-400 bg-indigo-500/20 px-1.5 py-0.2 rounded font-mono">
-              Stage 11
+            <span className="text-[10px] text-emerald-400 bg-emerald-500/20 px-1.5 py-0.2 rounded font-mono font-semibold">
+              100% Ready
             </span>
           </button>
 

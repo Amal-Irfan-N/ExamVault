@@ -75,7 +75,7 @@ export const NAVIGATION_ITEMS = [
     name: "Live Dev Progress",
     href: "/progress",
     icon: Layers,
-    badge: "Stage 11",
+    badge: "100%",
   },
 ];
 
@@ -231,7 +231,7 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
               <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
             </div>
             <p className="text-slate-400 text-[10px] leading-relaxed mb-1">
-              Stage 11 IndexedDB & Offline Sync Active.
+              All 14 Stages Fully Built & Verified.
             </p>
             <div className="flex items-center text-[10px] text-indigo-400 font-semibold group-hover:underline">
               View In-App Progress →
