@@ -13,8 +13,8 @@ Last Updated: November 2026
 | **Stage 5** | **Examination details & visual lifecycle timeline** | **COMPLETED** | 6-stage lifecycle stepper, certainty badges, percentage tracker, dual-tab inspector, and dedicated /examinations/[id] route. |
 | **Stage 6** | **Examination document vault (Upload, camera scan, PDF/Image preview, RLS)** | **COMPLETED** | 14 categories, DocumentContext, PDF/Image preview lightbox, camera scan capture, rename and deletion safeguards. |
 | **Stage 7** | **Secure credential vault (AES-GCM client encryption, Web Crypto, auto-lock)** | **COMPLETED** | Web Crypto API AES-GCM 256-bit, PBKDF2 100k rounds, 15-min auto-lock, password generator, copy shortcuts. |
-| **Stage 8** | Calendar & reminder system (Agenda/Week/Month, Web Push, background jobs) | **IN PROGRESS** | Agenda and reminder presets active; building interactive Month & Week calendar grids. |
-| **Stage 9** | Automatic website monitoring & change detection worker | **PENDING** | Monitoring alert UI & activity log architecture ready. |
+| **Stage 8** | **Calendar & reminder system (Agenda/Week/Month, Web Push, background jobs)** | **COMPLETED** | Dynamic event extractor, Month grid, Week view, Agenda view, .ICS export, and browser Web Notification alerts. |
+| **Stage 9** | Automatic website monitoring & change detection worker | **IN PROGRESS** | Scaffolding official portal monitoring architecture, change diff alerts, and verification flows. |
 | **Stage 10** | Exam discovery module (Verified official recruitment integration) | **PENDING** | Discovery page & filtering built. |
 | **Stage 11** | Local storage & offline functionality (IndexedDB / Dexie.js) | **PENDING** | Client-side data flow planned. |
 | **Stage 12** | Cloud synchronization (Conflict handling, queue, offline-first) | **PENDING** | Sync status indicators active in UI. |
