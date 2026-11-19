@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { AppLayout } from "@/components/layout/app-layout";
 import { useExaminations } from "@/context/ExaminationContext";
@@ -270,9 +271,14 @@ function ExaminationsContent() {
                       )}
                     </div>
 
-                    <h3 className="text-base font-bold text-white tracking-tight">
-                      {exam.examName}
-                    </h3>
+                    <Link
+                      href={`/examinations/${exam.id}`}
+                      className="group/title inline-block"
+                    >
+                      <h3 className="text-base font-bold text-white tracking-tight group-hover/title:text-indigo-400 transition-colors">
+                        {exam.examName}
+                      </h3>
+                    </Link>
 
                     <p className="text-xs text-slate-300 font-medium">
                       Post: {exam.postName}

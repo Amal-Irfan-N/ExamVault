@@ -10,8 +10,8 @@ Last Updated: November 2026
 | **Stage 2** | **Responsive dashboard, command palette (⌘K) & quick-add examination** | **COMPLETED** | Reactive ExaminationContext, Command Palette (⌘K), Quick-Add Modal, multi-dimensional filters, instant KPI reactivity. |
 | **Stage 3** | **Database architecture, PostgreSQL schema, Supabase Auth & RLS** | **COMPLETED** | 12 PostgreSQL tables, strict RLS policies, Supabase Client & SSR SDK, AuthProvider/Modal, TypeScript Database types. |
 | **Stage 4** | **Examination management (CRUD, multi-category, advanced search)** | **COMPLETED** | Edit modal with all 4 sections, Delete confirmation modal, Active/Archived tabs, details inspector, and query sync. |
-| **Stage 5** | Examination details & visual lifecycle timeline | **IN PROGRESS** | Status & certainty badges implemented; developing visual timeline stepper component. |
-| **Stage 6** | Document vault (Upload, camera scan, PDF/Image preview, RLS) | **PENDING** | Document types, categories & UI created. |
+| **Stage 5** | **Examination details & visual lifecycle timeline** | **COMPLETED** | 6-stage lifecycle stepper, certainty badges, percentage tracker, dual-tab inspector, and dedicated /examinations/[id] route. |
+| **Stage 6** | Examination document vault (Upload, camera scan, PDF/Image preview, RLS) | **IN PROGRESS** | Document types & category grid established; building private upload and preview subsystem. |
 | **Stage 7** | Secure credential vault (AES-GCM client encryption, Web Crypto, auto-lock) | **PENDING** | UI scaffolding & security copy controls built. |
 | **Stage 8** | Calendar & reminder system (Agenda/Week/Month, Web Push, background jobs) | **PENDING** | Agenda & reminder presets built. |
 | **Stage 9** | Automatic website monitoring & change detection worker | **PENDING** | Monitoring alert UI & activity log architecture ready. |

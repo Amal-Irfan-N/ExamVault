@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Examination, ExamStatus } from "@/types/examination";
 import { StatusBadge, CertaintyBadge } from "@/components/ui/status-badge";
 import { formatDate } from "@/lib/utils";
@@ -10,14 +10,16 @@ import {
   Trash2,
   Archive,
   ExternalLink,
-  Calendar,
   Building2,
   Hash,
   MapPin,
   Award,
+  Layers,
+  Milestone,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { ExaminationLifecycleTimeline } from "./examination-lifecycle-timeline";
 
 interface ExamDetailsModalProps {
   isOpen: boolean;
@@ -38,6 +40,8 @@ export function ExamDetailsModal({
   onUpdateStatus,
   onClose,
 }: ExamDetailsModalProps) {
+  const [activeModalTab, setActiveModalTab] = useState<"overview" | "timeline">("overview");
+
   if (!isOpen || !exam) return null;
 
   const nextStatusOptions: { status: ExamStatus; label: string }[] = [
@@ -89,212 +93,268 @@ export function ExamDetailsModal({
 
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-[#1a2133] transition-colors"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-[#1a2133] transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
+        {/* Sub-header Navigation Tabs */}
+        <div className="flex items-center gap-1 px-5 pt-3 border-b border-[#1e2536] bg-[#0f131c]">
+          <button
+            onClick={() => setActiveModalTab("overview")}
+            className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold border-b-2 transition-colors cursor-pointer ${
+              activeModalTab === "overview"
+                ? "border-indigo-500 text-white"
+                : "border-transparent text-slate-400 hover:text-slate-200"
+            }`}
+          >
+            <Layers className="w-3.5 h-3.5" />
+            Full Details Overview
+          </button>
+
+          <button
+            onClick={() => setActiveModalTab("timeline")}
+            className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold border-b-2 transition-colors cursor-pointer ${
+              activeModalTab === "timeline"
+                ? "border-indigo-500 text-white"
+                : "border-transparent text-slate-400 hover:text-slate-200"
+            }`}
+          >
+            <Milestone className="w-3.5 h-3.5 text-indigo-400" />
+            Visual Lifecycle Timeline
+            <span className="text-[10px] bg-indigo-500/20 text-indigo-300 px-1.5 py-0.2 rounded-full font-mono">
+              6 Steps
+            </span>
+          </button>
+        </div>
+
         {/* Content Body */}
         <div className="flex-1 overflow-y-auto p-5 space-y-4 text-xs">
-          {/* Quick Lifecycle Status Stepper */}
-          <div className="p-3.5 rounded-xl bg-[#121620] border border-[#1e2536] space-y-2">
-            <span className="font-semibold text-white block text-[11px] uppercase tracking-wider">
-              Quick Status Transition
-            </span>
-            <div className="flex flex-wrap items-center gap-1.5">
-              {nextStatusOptions.map((opt) => (
-                <button
-                  key={opt.status}
-                  onClick={() => onUpdateStatus(exam.id, opt.status)}
-                  className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors cursor-pointer ${
-                    exam.status === opt.status
-                      ? "bg-indigo-600 text-white shadow-sm"
-                      : "bg-[#0b0e14] text-slate-400 hover:text-white border border-[#1e2536]"
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Section A: Basic Info */}
-          <div className="p-4 rounded-xl bg-[#121620] border border-[#1e2536] space-y-2.5">
-            <span className="font-semibold text-white uppercase tracking-wider text-[11px] flex items-center gap-1.5">
-              <Building2 className="w-3.5 h-3.5 text-indigo-400" />
-              A. Basic Recruitment Details
-            </span>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-slate-300">
-              <div>
-                <span className="text-slate-500 block text-[11px]">Notice / Ad Number</span>
-                <span className="font-mono font-medium text-slate-200">
-                  {exam.advertisementNumber || "Not specified"}
+          {activeModalTab === "timeline" ? (
+            <ExaminationLifecycleTimeline
+              exam={exam}
+              onUpdateStatus={onUpdateStatus}
+            />
+          ) : (
+            <>
+              {/* Quick Lifecycle Status Stepper */}
+              <div className="p-3.5 rounded-xl bg-[#121620] border border-[#1e2536] space-y-2">
+                <span className="font-semibold text-white block text-[11px] uppercase tracking-wider">
+                  Quick Status Transition
                 </span>
-              </div>
-              <div>
-                <span className="text-slate-500 block text-[11px]">Recruitment Year</span>
-                <span className="font-medium text-slate-200">{exam.recruitmentYear}</span>
-              </div>
-            </div>
-
-            {exam.officialApplicationUrl && (
-              <div className="pt-2 border-t border-[#1a2133] flex items-center justify-between">
-                <span className="text-slate-400">Official Application Portal:</span>
-                <a
-                  href={exam.officialApplicationUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-1 text-xs text-indigo-400 hover:text-indigo-300 font-semibold"
-                >
-                  Open Portal <ExternalLink className="w-3 h-3" />
-                </a>
-              </div>
-            )}
-
-            {exam.personalNotes && (
-              <div className="pt-2 border-t border-[#1a2133]">
-                <span className="text-slate-500 block text-[11px] mb-1">Personal Preparation Notes:</span>
-                <p className="text-slate-300 bg-[#0b0e14] p-2.5 rounded-lg border border-[#182030] leading-relaxed">
-                  {exam.personalNotes}
-                </p>
-              </div>
-            )}
-          </div>
-
-          {/* Section B: Application Details & Fee */}
-          <div className="p-4 rounded-xl bg-[#121620] border border-[#1e2536] space-y-2.5">
-            <span className="font-semibold text-white uppercase tracking-wider text-[11px] flex items-center gap-1.5">
-              <Hash className="w-3.5 h-3.5 text-blue-400" />
-              B. Registration IDs, Deadlines & Fee
-            </span>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="p-2.5 rounded-lg bg-[#0e121a] border border-[#1b2233]">
-                <span className="text-slate-500 block text-[11px] mb-0.5">Registration / OTR ID</span>
-                <span className="font-mono text-slate-200 font-semibold">
-                  {exam.registrationNumber || "Not assigned"}
-                </span>
-              </div>
-
-              <div className="p-2.5 rounded-lg bg-[#0e121a] border border-[#1b2233]">
-                <span className="text-slate-500 block text-[11px] mb-0.5">Application Number</span>
-                <span className="font-mono text-slate-200 font-semibold">
-                  {exam.applicationNumber || "Draft / Pending"}
-                </span>
-              </div>
-
-              <div className="p-2.5 rounded-lg bg-[#0e121a] border border-[#1b2233]">
-                <span className="text-slate-500 block text-[11px] mb-0.5">Payment Status</span>
-                <span
-                  className={`font-semibold capitalize ${
-                    exam.paymentStatus === "completed"
-                      ? "text-emerald-400"
-                      : "text-amber-400"
-                  }`}
-                >
-                  {exam.paymentStatus} {exam.applicationFee ? `(₹${exam.applicationFee})` : ""}
-                </span>
-              </div>
-            </div>
-
-            {exam.applicationClosingDate?.date && (
-              <div className="pt-2 border-t border-[#1a2133] flex items-center justify-between">
-                <span className="text-slate-400">Application Closing Deadline:</span>
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold text-slate-200">
-                    {formatDate(exam.applicationClosingDate.date)}
-                  </span>
-                  <CertaintyBadge certainty={exam.applicationClosingDate.certainty} />
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Section C: Exam Schedule & Centre */}
-          <div className="p-4 rounded-xl bg-[#121620] border border-[#1e2536] space-y-2.5">
-            <span className="font-semibold text-white uppercase tracking-wider text-[11px] flex items-center gap-1.5">
-              <Calendar className="w-3.5 h-3.5 text-emerald-400" />
-              C. Examination Schedule & Assigned Centre
-            </span>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="p-2.5 rounded-lg bg-[#0e121a] border border-[#1b2233]">
-                <span className="text-slate-500 block text-[11px] mb-0.5">Test Date</span>
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold text-white">
-                    {formatDate(exam.examDate?.date)}
-                  </span>
-                  {exam.examDate?.certainty && (
-                    <CertaintyBadge certainty={exam.examDate.certainty} />
-                  )}
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {nextStatusOptions.map((opt) => (
+                    <button
+                      key={opt.status}
+                      onClick={() => onUpdateStatus(exam.id, opt.status)}
+                      className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors cursor-pointer ${
+                        exam.status === opt.status
+                          ? "bg-indigo-600 text-white shadow-sm"
+                          : "bg-[#0b0e14] text-slate-400 hover:text-white border border-[#1e2536]"
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
                 </div>
               </div>
 
-              <div className="p-2.5 rounded-lg bg-[#0e121a] border border-[#1b2233]">
-                <span className="text-slate-500 block text-[11px] mb-0.5">Assigned City</span>
-                <span className="font-medium text-slate-200 flex items-center gap-1">
-                  <MapPin className="w-3 h-3 text-slate-500" />
-                  {exam.examCity || "To be intimated"}
+              {/* Section A: Basic Info */}
+              <div className="p-4 rounded-xl bg-[#121620] border border-[#1e2536] space-y-2.5">
+                <span className="font-semibold text-white uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                  <Building2 className="w-3.5 h-3.5 text-indigo-400" />
+                  A. Basic Recruitment Details
                 </span>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-slate-300">
+                  <div>
+                    <span className="text-slate-500 block text-[11px]">Notice / Ad Number</span>
+                    <span className="font-mono font-medium text-slate-200">
+                      {exam.advertisementNumber || "Not specified"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 block text-[11px]">Recruitment Year</span>
+                    <span className="font-medium text-slate-200">{exam.recruitmentYear}</span>
+                  </div>
+                </div>
+
+                {exam.officialApplicationUrl && (
+                  <div className="pt-2 border-t border-[#1a2133] flex items-center justify-between">
+                    <span className="text-slate-400">Official Application Portal:</span>
+                    <a
+                      href={exam.officialApplicationUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 text-xs text-indigo-400 hover:text-indigo-300 font-semibold"
+                    >
+                      Open Portal <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
+                )}
+
+                {exam.personalNotes && (
+                  <div className="pt-2 border-t border-[#1a2133]">
+                    <span className="text-slate-500 block text-[11px] mb-1">Personal Preparation Notes:</span>
+                    <p className="text-slate-300 bg-[#0b0e14] p-2.5 rounded-lg border border-[#182030] leading-relaxed">
+                      {exam.personalNotes}
+                    </p>
+                  </div>
+                )}
               </div>
-            </div>
 
-            {exam.examCentre && (
-              <div className="p-2.5 rounded-lg bg-[#0e121a] border border-[#1b2233]">
-                <span className="text-slate-500 block text-[11px] mb-0.5">Test Centre / Venue</span>
-                <span className="text-slate-200 font-medium">{exam.examCentre}</span>
-              </div>
-            )}
-
-            {exam.examSession && (
-              <div className="text-slate-400">
-                <span>Session / Timings: </span>
-                <strong className="text-slate-200">{exam.examSession}</strong>
-              </div>
-            )}
-          </div>
-
-          {/* Section D: Post-Exam & Selection */}
-          <div className="p-4 rounded-xl bg-[#121620] border border-[#1e2536] space-y-2.5">
-            <span className="font-semibold text-white uppercase tracking-wider text-[11px] flex items-center gap-1.5">
-              <Award className="w-3.5 h-3.5 text-amber-400" />
-              D. Post-Examination Milestones & Results
-            </span>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <span className="text-slate-500 block text-[11px]">Provisional Answer Key:</span>
-                <span className="text-slate-200 font-medium">
-                  {formatDate(exam.answerKeyReleaseDate?.date)}
+              {/* Section B: Application Credentials & Fee */}
+              <div className="p-4 rounded-xl bg-[#121620] border border-[#1e2536] space-y-2.5">
+                <span className="font-semibold text-white uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                  <Hash className="w-3.5 h-3.5 text-blue-400" />
+                  B. Registration IDs & Application Deadlines
                 </span>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-slate-300">
+                  <div>
+                    <span className="text-slate-500 block text-[11px]">Registration / OTR ID</span>
+                    <span className="font-mono font-medium text-slate-200">
+                      {exam.registrationNumber || "Not recorded yet"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 block text-[11px]">Application Number</span>
+                    <span className="font-mono font-medium text-slate-200">
+                      {exam.applicationNumber || "Not recorded yet"}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-slate-300 pt-2 border-t border-[#1a2133]">
+                  <div>
+                    <span className="text-slate-500 block text-[11px]">Application Deadline:</span>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <span className="text-slate-200 font-medium">
+                        {formatDate(exam.applicationClosingDate?.date)}
+                      </span>
+                      {exam.applicationClosingDate?.certainty && (
+                        <CertaintyBadge certainty={exam.applicationClosingDate.certainty} />
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <span className="text-slate-500 block text-[11px]">Fee Payment Status:</span>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="capitalize text-slate-200 font-medium">
+                        {exam.paymentStatus || "pending"}
+                      </span>
+                      {exam.applicationFee !== undefined && (
+                        <span className="text-[11px] text-slate-400">
+                          (₹{exam.applicationFee})
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              <div>
-                <span className="text-slate-500 block text-[11px]">Result Publication:</span>
-                <span className="text-slate-200 font-medium">
-                  {formatDate(exam.resultPublicationDate?.date)}
+              {/* Section C: Exam Schedule & Venue */}
+              <div className="p-4 rounded-xl bg-[#121620] border border-[#1e2536] space-y-2.5">
+                <span className="font-semibold text-white uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                  <MapPin className="w-3.5 h-3.5 text-emerald-400" />
+                  C. Examination Schedule & Allotted Venue
                 </span>
-              </div>
-            </div>
 
-            {exam.finalSelectionStatus && exam.finalSelectionStatus !== "pending" && (
-              <div className="pt-2 border-t border-[#1a2133] flex items-center justify-between">
-                <span className="text-slate-400">Selection Outcome:</span>
-                <Badge
-                  variant={
-                    exam.finalSelectionStatus === "qualified" || exam.finalSelectionStatus === "selected"
-                      ? "success"
-                      : "destructive"
-                  }
-                  className="capitalize font-semibold text-xs"
-                >
-                  {exam.finalSelectionStatus}
-                </Badge>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-slate-300">
+                  <div>
+                    <span className="text-slate-500 block text-[11px]">Examination Date:</span>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <span className="text-slate-200 font-medium">
+                        {formatDate(exam.examDate?.date)}
+                      </span>
+                      {exam.examDate?.certainty && (
+                        <CertaintyBadge certainty={exam.examDate.certainty} />
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <span className="text-slate-500 block text-[11px]">Assigned City:</span>
+                    <span className="text-slate-200 font-medium">
+                      {exam.examCity || "Pending city intimation"}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-slate-300 pt-2 border-t border-[#1a2133]">
+                  <div>
+                    <span className="text-slate-500 block text-[11px]">Examination Centre:</span>
+                    <span className="text-slate-200 font-medium">
+                      {exam.examCentre || "Pending admit card"}
+                    </span>
+                  </div>
+
+                  <div>
+                    <span className="text-slate-500 block text-[11px]">Shift / Session:</span>
+                    <span className="text-slate-200 font-medium">
+                      {exam.examSession || "To be announced"}
+                    </span>
+                  </div>
+                </div>
+
+                {exam.hallTicketDownloadUrl && (
+                  <div className="pt-2 border-t border-[#1a2133] flex items-center justify-between">
+                    <span className="text-slate-400">Hall Ticket / Admit Card:</span>
+                    <a
+                      href={exam.hallTicketDownloadUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 text-xs text-emerald-400 hover:text-emerald-300 font-semibold"
+                    >
+                      Download Admit Card <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+
+              {/* Section D: Post-Exam Information */}
+              <div className="p-4 rounded-xl bg-[#121620] border border-[#1e2536] space-y-2.5">
+                <span className="font-semibold text-white uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                  <Award className="w-3.5 h-3.5 text-amber-400" />
+                  D. Post-Examination Outcomes
+                </span>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-slate-300">
+                  <div>
+                    <span className="text-slate-500 block text-[11px]">Answer Key Release:</span>
+                    <span className="text-slate-200 font-medium">
+                      {formatDate(exam.answerKeyReleaseDate?.date)}
+                    </span>
+                  </div>
+
+                  <div>
+                    <span className="text-slate-500 block text-[11px]">Result Publication:</span>
+                    <span className="text-slate-200 font-medium">
+                      {formatDate(exam.resultPublicationDate?.date)}
+                    </span>
+                  </div>
+                </div>
+
+                {exam.finalSelectionStatus && exam.finalSelectionStatus !== "pending" && (
+                  <div className="pt-2 border-t border-[#1a2133] flex items-center justify-between">
+                    <span className="text-slate-400">Selection Outcome:</span>
+                    <Badge
+                      variant={
+                        exam.finalSelectionStatus === "qualified" || exam.finalSelectionStatus === "selected"
+                          ? "success"
+                          : "destructive"
+                      }
+                      className="capitalize font-semibold text-xs"
+                    >
+                      {exam.finalSelectionStatus}
+                    </Badge>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
         </div>
 
         {/* Footer Actions */}
