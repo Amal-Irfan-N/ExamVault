@@ -15,8 +15,9 @@ Last Updated: November 2026
 | **Stage 7** | **Secure credential vault (AES-GCM client encryption, Web Crypto, auto-lock)** | **COMPLETED** | Web Crypto API AES-GCM 256-bit, PBKDF2 100k rounds, 15-min auto-lock, password generator, copy shortcuts. |
 | **Stage 8** | **Calendar & reminder system (Agenda/Week/Month, Web Push, background jobs)** | **COMPLETED** | Dynamic event extractor, Month grid, Week view, Agenda view, .ICS export, and browser Web Notification alerts. |
 | **Stage 9** | **Automatic website monitoring & change detection worker** | **COMPLETED** | Official portal worker, visual diff detector, ChangeReviewModal with user approval, and AddTargetModal. |
-| **Stage 10** | Exam discovery module (Verified official recruitment integration) | **IN PROGRESS** | Scaffolding official recruitment sources, qualification criteria, and one-click vault import. |
-| **Stage 11** | Local storage & offline functionality (IndexedDB / Dexie.js) | **PENDING** | Client-side data flow planned. |
+| **Stage 10** | **Exam discovery module (Verified official recruitment integration)** | **COMPLETED** | Curated catalog across 8 major recruiters (UPSC, SSC, RRB, DRDO, Banking, PSUs), multi-filters, one-click vault import. |
+| **Stage 11** | Local storage & offline functionality (IndexedDB / Dexie.js) | **IN PROGRESS** | Client-side Dexie.js schema, offline cache & mutation queue, network status monitor. |
+| **Stage 12** | Cloud synchronization (Conflict handling, queue, offline-first) | **PENDING** | Sync status indicators active in UI. |
 | **Stage 12** | Cloud synchronization (Conflict handling, queue, offline-first) | **PENDING** | Sync status indicators active in UI. |
 | **Stage 13** | PWA installation & notifications (Manifest, Service Worker, Android support) | **PENDING** | Viewport & web-app metadata configured. |
 | **Stage 14** | Testing, security review, audits & production deployment | **PENDING** | ESLint & production build pipeline established. |
