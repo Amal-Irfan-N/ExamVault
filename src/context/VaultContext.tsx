@@ -178,41 +178,8 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(newConfig));
       setConfig(newConfig);
 
-      // Encrypt initial sample credentials into storage
+      // Initialize empty encrypted storage for user
       const encryptedRecords: EncryptedCredentialRecord[] = [];
-      const now = new Date().toISOString();
-
-      for (const sample of INITIAL_SAMPLE_CREDENTIALS) {
-        const credId = `cred-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
-        const recSalt = getRandomBytes(16);
-        const encrypted = await encryptData(
-          {
-            username: sample.username,
-            password: sample.password,
-            registrationNumber: sample.registrationNumber,
-            applicationNumber: sample.applicationNumber,
-            registeredEmail: sample.registeredEmail,
-            registeredMobile: sample.registeredMobile,
-            securityNotes: sample.securityNotes,
-          },
-          masterKey,
-          recSalt
-        );
-
-        encryptedRecords.push({
-          id: credId,
-          examId: sample.examId,
-          org: sample.org,
-          portalName: sample.portalName,
-          portalUrl: sample.portalUrl,
-          ciphertext: encrypted.ciphertext,
-          iv: encrypted.iv,
-          salt: encrypted.salt,
-          createdAt: now,
-          updatedAt: now,
-        });
-      }
-
       localStorage.setItem(RECORDS_STORAGE_KEY, JSON.stringify(encryptedRecords));
 
       // Persist encrypted records into IndexedDB

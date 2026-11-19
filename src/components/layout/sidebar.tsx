@@ -13,8 +13,6 @@ import {
   Bell,
   Settings,
   ShieldCheck,
-  Sparkles,
-  Layers,
   Database,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -33,7 +31,7 @@ export const NAVIGATION_ITEMS = [
     name: "My Examinations",
     href: "/examinations",
     icon: GraduationCap,
-    badge: "7",
+    badge: null,
   },
   {
     name: "Exam Discovery",
@@ -63,19 +61,13 @@ export const NAVIGATION_ITEMS = [
     name: "Notifications",
     href: "/notifications",
     icon: Bell,
-    badge: "4",
+    badge: null,
   },
   {
     name: "Settings",
     href: "/settings",
     icon: Settings,
     badge: null,
-  },
-  {
-    name: "Live Dev Progress",
-    href: "/progress",
-    icon: Layers,
-    badge: "100%",
   },
 ];
 
@@ -217,26 +209,6 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
               <span className="text-[10px] text-slate-500 font-mono">Dexie v4</span>
             )}
           </button>
-
-          <Link
-            href="/progress"
-            onClick={onNavigate}
-            className="block p-2.5 rounded-lg bg-[#121622] border border-[#1e2536] hover:border-indigo-500/40 text-xs transition-all group"
-          >
-            <div className="flex items-center justify-between mb-1">
-              <span className="font-semibold text-slate-200 flex items-center gap-1.5 group-hover:text-indigo-300 text-[11px]">
-                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                Live Roadmap
-              </span>
-              <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            </div>
-            <p className="text-slate-400 text-[10px] leading-relaxed mb-1">
-              All 14 Stages Fully Built & Verified.
-            </p>
-            <div className="flex items-center text-[10px] text-indigo-400 font-semibold group-hover:underline">
-              View In-App Progress →
-            </div>
-          </Link>
         </div>
       </div>
 
@@ -252,11 +224,11 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
             </div>
             <div className="flex flex-col min-w-0">
               <span className="text-xs font-medium text-slate-200 truncate group-hover:text-indigo-300 transition-colors">
-                {profile?.fullName ?? "Candidate Sign In"}
+                {profile?.fullName ?? "Candidate Profile"}
               </span>
               <span className="text-[10px] text-emerald-400 flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
-                {isConfigured ? "Supabase Connected" : "Local Demo Mode"}
+                {isConfigured ? "Cloud Synced" : "Personal Vault • Offline"}
               </span>
             </div>
           </button>

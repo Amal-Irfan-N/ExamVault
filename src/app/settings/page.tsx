@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 
 export default function SettingsPage() {
-  const { profile, isConfigured, signOut, setIsAuthModalOpen } = useAuth();
+  const { profile, isConfigured, signOut, setIsAuthModalOpen, updateProfile } = useAuth();
   const {
     effectiveOnline,
     isSimulatedOffline,
@@ -36,14 +36,15 @@ export default function SettingsPage() {
   } = useOffline();
   const { examinations } = useExaminations();
 
-  const [name, setName] = useState(profile?.fullName ?? "Aman Verma");
-  const [email, setEmail] = useState(profile?.email ?? "aman.verma.exam@gmail.com");
+  const [name, setName] = useState(profile?.fullName ?? "");
+  const [email, setEmail] = useState(profile?.email ?? "");
   const [reminderDays, setReminderDays] = useState("30, 15, 7, 3, 1");
   const [autoLockMinutes, setAutoLockMinutes] = useState("15");
   const [isSaved, setIsSaved] = useState(false);
   const [pushStatus, setPushStatus] = useState<string | null>(null);
 
   const handleSave = () => {
+    updateProfile(name, email);
     setIsSaved(true);
     setTimeout(() => setIsSaved(false), 2000);
   };
@@ -87,8 +88,8 @@ export default function SettingsPage() {
             <h1 className="text-xl md:text-2xl font-bold tracking-tight text-white">
               Application Settings
             </h1>
-            <Badge variant="outline" className="text-indigo-400 border-indigo-500/30">
-              Stage 11 Offline & Cloud Ready
+            <Badge variant="outline" className="text-emerald-400 border-emerald-500/30">
+              Offline & Cloud Ready
             </Badge>
           </div>
           <p className="text-xs md:text-sm text-slate-400">

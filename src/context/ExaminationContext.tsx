@@ -11,12 +11,11 @@ import {
 } from "@/types/examination";
 import {
   INITIAL_MOCK_EXAMINATIONS,
-  MOCK_ACTIVITIES,
   calculateDashboardStats,
   getUpcomingDeadlines,
   getUpcomingExamDates,
 } from "@/data/mockExaminations";
-import { examVaultDB, seedDatabaseIfEmpty, LocalExamination } from "@/lib/db/indexed-db";
+import { examVaultDB, LocalExamination } from "@/lib/db/indexed-db";
 
 export const DEFAULT_CATEGORIES = [
   "UPSC",
@@ -71,15 +70,15 @@ export function ExaminationProvider({ children }: { children: React.ReactNode })
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) {
+          if (Array.isArray(parsed)) {
             return parsed;
           }
         } catch {
-          return INITIAL_MOCK_EXAMINATIONS;
+          return [];
         }
       }
     }
-    return INITIAL_MOCK_EXAMINATIONS;
+    return [];
   });
 
   const [categories, setCategories] = useState<string[]>(() => {
@@ -99,7 +98,7 @@ export function ExaminationProvider({ children }: { children: React.ReactNode })
     return DEFAULT_CATEGORIES;
   });
 
-  const [activities, setActivities] = useState<ExamActivity[]>(MOCK_ACTIVITIES);
+  const [activities, setActivities] = useState<ExamActivity[]>([]);
   const [selectedYear, setSelectedYear] = useState<string>("all");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
@@ -122,12 +121,6 @@ export function ExaminationProvider({ children }: { children: React.ReactNode })
         if (stored.length > 0) {
           const list = stored.map((item) => (item.fullData ? item.fullData : item));
           setExaminations(list as unknown as Examination[]);
-        } else {
-          await seedDatabaseIfEmpty(INITIAL_MOCK_EXAMINATIONS, [], []);
-          setExaminations(INITIAL_MOCK_EXAMINATIONS);
-          if (typeof window !== "undefined") {
-            localStorage.setItem("examvault_exams", JSON.stringify(INITIAL_MOCK_EXAMINATIONS));
-          }
         }
       } catch (err) {
         console.warn("IndexedDB load error, fallback to localStorage:", err);

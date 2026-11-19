@@ -11,7 +11,6 @@ import {
   AlertCircle,
   FileText,
   Filter,
-  Sparkles,
   RotateCcw,
   LayoutGrid,
   List,
@@ -75,30 +74,30 @@ export default function DashboardPage() {
         <QuickActions />
       </div>
 
-      {/* Stage 2 Live Roadmap Banner */}
-      <div className="p-3.5 rounded-xl bg-gradient-to-r from-indigo-950/40 via-[#131724] to-[#121620] border border-indigo-500/20 text-xs text-slate-300 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      {/* Welcome & Search Shortcut Banner */}
+      <div className="p-4 rounded-xl bg-gradient-to-r from-indigo-950/40 via-[#131724] to-[#121620] border border-indigo-500/20 text-xs text-slate-300 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-start gap-3">
-          <div className="p-1.5 rounded-lg bg-indigo-500/20 text-indigo-400 mt-0.5 flex-shrink-0">
-            <Sparkles className="w-4 h-4" />
+          <div className="p-2 rounded-lg bg-indigo-500/20 text-indigo-400 mt-0.5 flex-shrink-0">
+            <GraduationCap className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-bold text-white">Stage 2 Active: Responsive Dashboard & Deep Navigation</span>
-              <Badge variant="success" className="text-[10px] py-0">
-                Command Palette (⌘K) & Quick-Add Enabled
+              <span className="font-bold text-white text-sm">Competitive Recruitment Lifecycle Hub</span>
+              <Badge variant="outline" className="text-[10px] py-0 border-indigo-500/30 text-indigo-300">
+                Offline First & Zero-Knowledge
               </Badge>
             </div>
-            <p className="text-slate-400 text-[11px] mt-0.5">
-              Press <kbd className="font-mono text-slate-300 bg-[#161c28] px-1 py-0.5 rounded border border-[#232c40]">⌘K</kbd> anywhere to search. Dynamic statistics update automatically upon adding examinations.
+            <p className="text-slate-400 text-xs mt-0.5">
+              Press <kbd className="font-mono text-slate-300 bg-[#161c28] px-1 py-0.5 rounded border border-[#232c40]">⌘K</kbd> anywhere to search examinations, registration IDs, or open quick actions.
             </p>
           </div>
         </div>
 
         <Link
-          href="/progress"
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 font-semibold text-xs transition-colors self-start sm:self-auto whitespace-nowrap"
+          href="/examinations"
+          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition-colors self-start sm:self-auto whitespace-nowrap shadow-sm"
         >
-          View Live Roadmap →
+          View All Examinations →
         </Link>
       </div>
 

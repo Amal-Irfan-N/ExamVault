@@ -22,22 +22,28 @@ interface AuthContextType {
   signInWithEmail: (email: string, password: string) => Promise<{ error: string | null }>;
   signUpWithEmail: (email: string, password: string, fullName: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
+  updateProfile: (fullName: string, email: string) => void;
   enableDemoUser: () => void;
 }
-
-const DEFAULT_DEMO_USER: UserProfile = {
-  id: "user-demo-1",
-  email: "aman.verma.exam@gmail.com",
-  fullName: "Aman Verma",
-  avatarUrl: undefined,
-};
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(DEFAULT_DEMO_USER);
+  const [profile, setProfile] = useState<UserProfile | null>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("examvault_user_profile");
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch {
+          return null;
+        }
+      }
+    }
+    return null;
+  });
   const [isLoading, setIsLoading] = useState<boolean>(isSupabaseConfigured);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
 
@@ -124,6 +130,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { error: null };
   };
 
+  const updateProfile = (fullName: string, email: string) => {
+    const updated: UserProfile = {
+      id: profile?.id || `user-${Date.now()}`,
+      fullName: fullName.trim() || "Candidate",
+      email: email.trim(),
+      avatarUrl: profile?.avatarUrl,
+    };
+    setProfile(updated);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("examvault_user_profile", JSON.stringify(updated));
+    }
+  };
+
   const signOut = async () => {
     const supabase = getSupabaseBrowserClient();
     if (supabase && isSupabaseConfigured) {
@@ -132,10 +151,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
     setSession(null);
     setProfile(null);
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("examvault_user_profile");
+    }
   };
 
   const enableDemoUser = () => {
-    setProfile(DEFAULT_DEMO_USER);
+    updateProfile("Candidate", "candidate@examvault.app");
   };
 
   return (
@@ -151,6 +173,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signInWithEmail,
         signUpWithEmail,
         signOut,
+        updateProfile,
         enableDemoUser,
       }}
     >

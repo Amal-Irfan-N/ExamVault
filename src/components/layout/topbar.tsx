@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import Link from "next/link";
 import {
   Search,
@@ -12,7 +12,6 @@ import {
   LogIn,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { LiveProgressModal } from "@/components/progress/live-progress-modal";
 import { useExaminations } from "@/context/ExaminationContext";
 import { useAuth } from "@/context/AuthContext";
 import { useOffline } from "@/context/OfflineContext";
@@ -24,7 +23,6 @@ interface TopbarProps {
 }
 
 export function Topbar({ onToggleMobileMenu, isMobileMenuOpen }: TopbarProps) {
-  const [isProgressOpen, setIsProgressOpen] = useState(false);
   const { setIsCommandPaletteOpen, setIsQuickAddOpen } = useExaminations();
   const { profile, setIsAuthModalOpen } = useAuth();
   const { effectiveOnline, pendingCount, setIsStorageModalOpen } = useOffline();
@@ -113,19 +111,6 @@ export function Topbar({ onToggleMobileMenu, isMobileMenuOpen }: TopbarProps) {
             )}
           </button>
 
-          {/* Live Progress Tracker Button */}
-          <button
-            onClick={() => setIsProgressOpen(true)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 text-xs text-indigo-300 transition-all cursor-pointer group"
-            title="Click to view full Live Progress Tracker"
-          >
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="font-semibold text-white group-hover:text-indigo-200 hidden sm:inline">Live Progress</span>
-            <span className="text-[10px] text-emerald-400 bg-emerald-500/20 px-1.5 py-0.2 rounded font-mono font-semibold">
-              100% Ready
-            </span>
-          </button>
-
           {/* Notifications Icon with Badge */}
           <Link
             href="/notifications"
@@ -172,7 +157,7 @@ export function Topbar({ onToggleMobileMenu, isMobileMenuOpen }: TopbarProps) {
               size="sm"
               variant="outline"
               onClick={() => setIsAuthModalOpen(true)}
-              className="text-xs h-8 px-2.5 gap-1.5"
+              className="text-xs h-8 px-2.5 gap-1.5 cursor-pointer"
             >
               <LogIn className="w-3.5 h-3.5 text-indigo-400" />
               <span>Sign In</span>
@@ -180,12 +165,6 @@ export function Topbar({ onToggleMobileMenu, isMobileMenuOpen }: TopbarProps) {
           )}
         </div>
       </header>
-
-      {/* Live In-App Progress Modal */}
-      <LiveProgressModal
-        isOpen={isProgressOpen}
-        onClose={() => setIsProgressOpen(false)}
-      />
     </>
   );
 }

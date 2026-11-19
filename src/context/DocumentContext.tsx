@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useMemo } from "react";
 import { VaultDocument } from "@/types/document";
-import { examVaultDB, seedDatabaseIfEmpty, LocalDocument } from "@/lib/db/indexed-db";
+import { examVaultDB, LocalDocument } from "@/lib/db/indexed-db";
 
 interface DocumentContextType {
   documents: VaultDocument[];
@@ -16,7 +16,7 @@ interface DocumentContextType {
 
 const STORAGE_KEY = "examvault_documents_v1";
 
-const INITIAL_MOCK_DOCUMENTS: VaultDocument[] = [
+export const INITIAL_MOCK_DOCUMENTS: VaultDocument[] = [
   {
     id: "doc-1",
     examId: "exam-1",
@@ -119,19 +119,19 @@ const DocumentContext = createContext<DocumentContextType | undefined>(undefined
 
 export function DocumentProvider({ children }: { children: React.ReactNode }) {
   const [documents, setDocuments] = useState<VaultDocument[]>(() => {
-    if (typeof window === "undefined") return INITIAL_MOCK_DOCUMENTS;
+    if (typeof window === "undefined") return [];
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed) && parsed.length > 0) {
+        if (Array.isArray(parsed)) {
           return parsed;
         }
       }
     } catch (e) {
       console.warn("Failed to read documents from localStorage:", e);
     }
-    return INITIAL_MOCK_DOCUMENTS;
+    return [];
   });
 
   // Load from IndexedDB on initial mount
@@ -142,8 +142,6 @@ export function DocumentProvider({ children }: { children: React.ReactNode }) {
         if (stored.length > 0) {
           const list = stored.map((item) => (item.fullData ? item.fullData : item));
           setDocuments(list as unknown as VaultDocument[]);
-        } else {
-          await seedDatabaseIfEmpty([], INITIAL_MOCK_DOCUMENTS, []);
         }
       } catch (err) {
         console.warn("IndexedDB document load error, fallback to localStorage:", err);

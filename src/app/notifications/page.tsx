@@ -39,46 +39,7 @@ interface AppNotification {
   actionUrl?: string;
 }
 
-const INITIAL_NOTIFICATIONS: AppNotification[] = [
-  {
-    id: "notif-1",
-    title: "Hall Ticket Released",
-    message: "ISRO Scientist/Engineer 'SC' computer science examination hall ticket is now available for download. Exam scheduled for 18 Apr 2026.",
-    examName: "ISRO ICRB 2026",
-    category: "admit_card",
-    timestamp: "2026-04-05T08:30:00Z",
-    isRead: false,
-    actionUrl: "https://apps.isro.gov.in/icrb/admitcard",
-  },
-  {
-    id: "notif-2",
-    title: "Official Notification Tracked",
-    message: "DRDO CEPTAM-11 STA-B recruitment advertisement detected on official recruitment website. Application window tentative from 01 Apr 2026.",
-    examName: "DRDO CEPTAM-11",
-    category: "monitoring",
-    timestamp: "2026-03-20T14:10:00Z",
-    isRead: false,
-    actionUrl: "https://drdo.gov.in/ceptam",
-  },
-  {
-    id: "notif-3",
-    title: "Official Scorecard Declared",
-    message: "GATE 2026 committee has published verified candidate scorecards. Your recorded score: 782 (Qualified for PSU Direct Interview).",
-    examName: "GATE 2026 (CS & IT)",
-    category: "result",
-    timestamp: "2026-03-19T18:00:00Z",
-    isRead: true,
-  },
-  {
-    id: "notif-4",
-    title: "Application Closing Reminder",
-    message: "Only 4 days remaining to finalize and submit application fee for RRB NTPC Graduate Posts 2026. Payment portal closes 16 Apr 2026.",
-    examName: "RRB NTPC CEN 05/2026",
-    category: "deadline",
-    timestamp: "2026-04-12T09:00:00Z",
-    isRead: true,
-  },
-];
+const INITIAL_NOTIFICATIONS: AppNotification[] = [];
 
 export default function NotificationsPage() {
   const {
@@ -426,56 +387,66 @@ export default function NotificationsPage() {
             </div>
 
             <div className="space-y-3">
-              {notifications.map((notif) => (
-                <Card
-                  key={notif.id}
-                  className={`border-[#1e2536] transition-colors ${
-                    notif.isRead ? "bg-[#121620] opacity-80" : "bg-[#141926] border-indigo-500/30"
-                  }`}
-                >
-                  <CardContent className="p-4 sm:p-5 flex items-start gap-3.5">
-                    <div className="p-2.5 rounded-xl bg-[#0b0e14] border border-[#1e2536] flex-shrink-0 mt-0.5">
-                      {getNotificationIcon(notif.category)}
-                    </div>
+              {notifications.length === 0 ? (
+                <div className="p-10 text-center rounded-xl bg-[#121620] border border-[#1e2536]">
+                  <Bell className="w-10 h-10 text-slate-600 mx-auto mb-3" />
+                  <h3 className="text-sm font-semibold text-slate-300">No new notifications</h3>
+                  <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                    You are all caught up! Real-time alerts for admit cards, result announcements, and deadline reminders will appear here.
+                  </p>
+                </div>
+              ) : (
+                notifications.map((notif) => (
+                  <Card
+                    key={notif.id}
+                    className={`border-[#1e2536] transition-colors ${
+                      notif.isRead ? "bg-[#121620] opacity-80" : "bg-[#141926] border-indigo-500/30"
+                    }`}
+                  >
+                    <CardContent className="p-4 sm:p-5 flex items-start gap-3.5">
+                      <div className="p-2.5 rounded-xl bg-[#0b0e14] border border-[#1e2536] flex-shrink-0 mt-0.5">
+                        {getNotificationIcon(notif.category)}
+                      </div>
 
-                    <div className="flex-1 min-w-0 space-y-1">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                          <h4 className="text-sm font-bold text-white">{notif.title}</h4>
-                          {!notif.isRead && (
-                            <span className="w-2 h-2 rounded-full bg-indigo-500" />
+                      <div className="flex-1 min-w-0 space-y-1">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <h4 className="text-sm font-bold text-white">{notif.title}</h4>
+                            {!notif.isRead && (
+                              <span className="w-2 h-2 rounded-full bg-indigo-500" />
+                            )}
+                          </div>
+                          <span className="text-[11px] text-slate-500">
+                            {formatDateTime(notif.timestamp)}
+                          </span>
+                        </div>
+
+                        <p className="text-xs text-slate-300 leading-relaxed">
+                          {notif.message}
+                        </p>
+
+                        <div className="flex items-center justify-between pt-2">
+                          <span className="text-[11px] font-medium text-slate-400">
+                            {notif.examName}
+                          </span>
+
+                          {notif.actionUrl && (
+                            <a
+                              href={notif.actionUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center gap-1 text-xs text-indigo-400 hover:text-indigo-300 font-semibold"
+                            >
+                              <span>Action Link</span>
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
                           )}
                         </div>
-                        <span className="text-[11px] text-slate-500">
-                          {formatDateTime(notif.timestamp)}
-                        </span>
                       </div>
-
-                      <p className="text-xs text-slate-300 leading-relaxed">
-                        {notif.message}
-                      </p>
-
-                      <div className="flex items-center justify-between pt-2">
-                        <span className="text-[11px] font-medium text-slate-400">
-                          {notif.examName}
-                        </span>
-
-                        {notif.actionUrl && (
-                          <a
-                            href={notif.actionUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center gap-1 text-xs text-indigo-400 hover:text-indigo-300 font-semibold"
-                          >
-                            <span>Action Link</span>
-                            <ExternalLink className="w-3 h-3" />
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                ))
+              )}
             </div>
           </div>
         )}
