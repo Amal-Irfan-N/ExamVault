@@ -38,52 +38,6 @@ const RECORDS_STORAGE_KEY = "examvault_encrypted_records_v1";
 
 const VaultContext = createContext<VaultContextType | undefined>(undefined);
 
-// Initial sample credentials encrypted with default password 'ExamVault@2026'
-const INITIAL_SAMPLE_CREDENTIALS: Omit<VaultCredential, "id" | "createdAt" | "updatedAt">[] = [
-  {
-    examId: "exam-1",
-    examName: "UPSC Civil Services Examination 2026",
-    org: "UPSC",
-    portalName: "UPSC One Time Registration (OTR)",
-    portalUrl: "https://upsconline.nic.in",
-    username: "OTR-IND-88401920",
-    password: "UPSC#Aman$2026!",
-    registrationNumber: "RID-893041829",
-    applicationNumber: "UPSC2026987412",
-    registeredEmail: "aman.verma.exam@gmail.com",
-    registeredMobile: "+91 98765 43210",
-    securityNotes: "OTR Security Question: Primary School Name. 2FA sent via SMS & Email.",
-  },
-  {
-    examId: "exam-4",
-    examName: "SSC Combined Graduate Level (CGL) 2026",
-    org: "SSC",
-    portalName: "Staff Selection Commission Portal",
-    portalUrl: "https://ssc.gov.in",
-    username: "SSC-OTR-88401923",
-    password: "SSC#AmanVault@26",
-    registrationNumber: "SSC-OTR-88401923",
-    applicationNumber: "SSC-CGL-2026-90184",
-    registeredEmail: "aman.verma.exam@gmail.com",
-    registeredMobile: "+91 98765 43210",
-    securityNotes: "Requires live selfie capture during login. OTR registration completed in Jan 2026.",
-  },
-  {
-    examId: "exam-3",
-    examName: "GATE 2026 (CS & IT)",
-    org: "GATE",
-    portalName: "GOAPS 2026 Candidate Login",
-    portalUrl: "https://goaps.iitr.ac.in",
-    username: "CS26S4109281",
-    password: "GATE#GoapsPass99*",
-    registrationNumber: "GOAPS-992102",
-    applicationNumber: "CS26S4109281",
-    registeredEmail: "aman.verma.exam@gmail.com",
-    registeredMobile: "+91 98765 43210",
-    securityNotes: "Enrollment ID CS26S4109281 for admit card and scorecard access.",
-  },
-];
-
 export function VaultProvider({ children }: { children: React.ReactNode }) {
   // Vault state
   const [config, setConfig] = useState<VaultSecurityConfig | null>(() => {
@@ -193,16 +147,9 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
       }));
       examVaultDB.credentials.bulkPut(dexieCreds).catch((e) => console.warn("Dexie credentials put error:", e));
 
-      // Unlock immediately
+      // Unlock immediately with clean vault
       activeKeyRef.current = masterKey;
-      setCredentials(
-        INITIAL_SAMPLE_CREDENTIALS.map((s, idx) => ({
-          ...s,
-          id: encryptedRecords[idx].id,
-          createdAt: now,
-          updatedAt: now,
-        }))
-      );
+      setCredentials([]);
       setIsUnlocked(true);
       resetAutoLockTimer();
       return true;
