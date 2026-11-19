@@ -9,10 +9,12 @@ import {
   Menu,
   X,
   Calendar,
+  LogIn,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LiveProgressModal } from "@/components/progress/live-progress-modal";
 import { useExaminations } from "@/context/ExaminationContext";
+import { useAuth } from "@/context/AuthContext";
 
 interface TopbarProps {
   onToggleMobileMenu: () => void;
@@ -22,6 +24,16 @@ interface TopbarProps {
 export function Topbar({ onToggleMobileMenu, isMobileMenuOpen }: TopbarProps) {
   const [isProgressOpen, setIsProgressOpen] = useState(false);
   const { setIsCommandPaletteOpen, setIsQuickAddOpen } = useExaminations();
+  const { profile, setIsAuthModalOpen } = useAuth();
+
+  const userInitials = profile?.fullName
+    ? profile.fullName
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2)
+    : "EV";
 
   return (
     <>
@@ -84,7 +96,7 @@ export function Topbar({ onToggleMobileMenu, isMobileMenuOpen }: TopbarProps) {
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
             <span className="font-semibold text-white group-hover:text-indigo-200 hidden sm:inline">Live Progress</span>
             <span className="text-[10px] text-indigo-400 bg-indigo-500/20 px-1.5 py-0.2 rounded font-mono">
-              Stage 2
+              Stage 3
             </span>
           </button>
 
@@ -118,15 +130,28 @@ export function Topbar({ onToggleMobileMenu, isMobileMenuOpen }: TopbarProps) {
             <span className="sm:hidden">Add</span>
           </Button>
 
-          {/* User Avatar */}
-          <Link
-            href="/settings"
-            className="flex items-center gap-2 pl-1 group cursor-pointer"
-          >
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-xs font-bold text-white shadow ring-1 ring-white/10 group-hover:ring-indigo-400 transition-all">
-              AV
-            </div>
-          </Link>
+          {/* User Auth / Profile Avatar */}
+          {profile ? (
+            <button
+              onClick={() => setIsAuthModalOpen(true)}
+              className="flex items-center gap-2 pl-1 group cursor-pointer"
+              title={`Logged in as ${profile.fullName} (${profile.email}) - Click to manage`}
+            >
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-xs font-bold text-white shadow ring-1 ring-white/10 group-hover:ring-indigo-400 transition-all">
+                {userInitials}
+              </div>
+            </button>
+          ) : (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setIsAuthModalOpen(true)}
+              className="text-xs h-8 px-2.5 gap-1.5"
+            >
+              <LogIn className="w-3.5 h-3.5 text-indigo-400" />
+              <span>Sign In</span>
+            </Button>
+          )}
         </div>
       </header>
 

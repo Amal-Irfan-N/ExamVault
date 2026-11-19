@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/context/AuthContext";
 
 export const NAVIGATION_ITEMS = [
   {
@@ -72,7 +73,7 @@ export const NAVIGATION_ITEMS = [
     name: "Live Dev Progress",
     href: "/progress",
     icon: Layers,
-    badge: "Stage 1",
+    badge: "Stage 3",
   },
 ];
 
@@ -83,6 +84,16 @@ interface SidebarProps {
 
 export function Sidebar({ className, onNavigate }: SidebarProps) {
   const pathname = usePathname();
+  const { profile, isConfigured, setIsAuthModalOpen } = useAuth();
+
+  const userInitials = profile?.fullName
+    ? profile.fullName
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2)
+    : "EV";
 
   return (
     <aside
@@ -152,7 +163,7 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
                     "text-[10px] px-1.5 py-0.5 rounded font-semibold",
                     item.badge === "New"
                       ? "bg-blue-500/20 text-blue-300 border border-blue-500/30"
-                      : item.badge === "Stage 1"
+                      : item.badge === "Stage 3"
                       ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
                       : item.badge === "AES"
                       ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
@@ -181,7 +192,7 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
               <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
             </div>
             <p className="text-slate-400 text-[11px] leading-relaxed mb-2">
-              Stage 1 of 14 Completed & Verified. Click to view full roadmap & deliverables.
+              Stage 3 PostgreSQL Schema & Supabase Auth configured.
             </p>
             <div className="flex items-center text-[11px] text-indigo-400 font-semibold group-hover:underline">
               View In-App Progress →
@@ -193,21 +204,26 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
       {/* User / Sync Status Footer */}
       <div className="p-3 border-t border-[#1e2536] bg-[#0b0e14]">
         <div className="flex items-center justify-between p-2 rounded-lg bg-[#121620] border border-[#1d2335]">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-xs font-semibold text-white">
-              AV
+          <button
+            onClick={() => setIsAuthModalOpen(true)}
+            className="flex items-center gap-2.5 text-left flex-1 min-w-0 cursor-pointer group"
+          >
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-xs font-semibold text-white flex-shrink-0 group-hover:ring-1 group-hover:ring-indigo-400 transition-all">
+              {userInitials}
             </div>
-            <div className="flex flex-col">
-              <span className="text-xs font-medium text-slate-200">Aman Verma</span>
+            <div className="flex flex-col min-w-0">
+              <span className="text-xs font-medium text-slate-200 truncate group-hover:text-indigo-300 transition-colors">
+                {profile?.fullName ?? "Candidate Sign In"}
+              </span>
               <span className="text-[10px] text-emerald-400 flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
-                Local Mode
+                {isConfigured ? "Supabase Connected" : "Local Demo Mode"}
               </span>
             </div>
-          </div>
+          </button>
           <Link
             href="/settings"
-            className="text-slate-400 hover:text-slate-200 p-1"
+            className="text-slate-400 hover:text-slate-200 p-1 flex-shrink-0"
             title="Settings"
           >
             <Settings className="w-4 h-4" />
