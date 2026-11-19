@@ -1,17 +1,24 @@
+"use client";
+
 import React from "react";
 import Link from "next/link";
 import { Plus, Upload, KeyRound, Compass, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useExaminations } from "@/context/ExaminationContext";
 
 export function QuickActions() {
+  const { setIsQuickAddOpen } = useExaminations();
+
   return (
     <div className="flex flex-wrap items-center gap-2.5">
-      <Link href="/examinations?action=new">
-        <Button size="sm" className="gap-2 text-xs bg-indigo-600 hover:bg-indigo-500 font-semibold shadow-sm">
-          <Plus className="w-3.5 h-3.5" />
-          Add Examination
-        </Button>
-      </Link>
+      <Button
+        size="sm"
+        onClick={() => setIsQuickAddOpen(true)}
+        className="gap-2 text-xs bg-indigo-600 hover:bg-indigo-500 font-semibold shadow-sm cursor-pointer"
+      >
+        <Plus className="w-3.5 h-3.5" />
+        Add Examination
+      </Button>
 
       <Link href="/documents?action=upload">
         <Button size="sm" variant="outline" className="gap-2 text-xs">

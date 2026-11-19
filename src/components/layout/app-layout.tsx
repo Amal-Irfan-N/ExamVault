@@ -24,7 +24,7 @@ export function AppLayout({ children }: AppLayoutProps) {
         <div className="md:hidden fixed inset-0 z-50 flex">
           {/* Backdrop */}
           <div
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm transition-opacity"
+            className="fixed inset-0 bg-black/70 backdrop-blur-md transition-opacity"
             onClick={() => setIsMobileMenuOpen(false)}
           />
           {/* Slide-out Drawer */}

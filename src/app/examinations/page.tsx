@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React from "react";
 import { AppLayout } from "@/components/layout/app-layout";
-import { INITIAL_MOCK_EXAMINATIONS } from "@/data/mockExaminations";
+import { useExaminations } from "@/context/ExaminationContext";
 import { StatusBadge, CertaintyBadge } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,29 +16,20 @@ import {
   Calendar,
   ExternalLink,
   Hash,
+  RotateCcw,
 } from "lucide-react";
 
 export default function ExaminationsPage() {
-  const [search, setSearch] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("all");
+  const {
+    filteredExaminations,
+    searchQuery,
+    setSearchQuery,
+    selectedCategory,
+    setSelectedCategory,
+    setIsQuickAddOpen,
+  } = useExaminations();
 
-  const filteredExams = useMemo(() => {
-    return INITIAL_MOCK_EXAMINATIONS.filter((exam) => {
-      const matchesSearch =
-        exam.examName.toLowerCase().includes(search.toLowerCase()) ||
-        exam.recruitingOrg.toLowerCase().includes(search.toLowerCase()) ||
-        exam.postName.toLowerCase().includes(search.toLowerCase()) ||
-        (exam.registrationNumber &&
-          exam.registrationNumber.toLowerCase().includes(search.toLowerCase()));
-
-      const matchesCategory =
-        selectedCategory === "all" || exam.category === selectedCategory;
-
-      return matchesSearch && matchesCategory;
-    });
-  }, [search, selectedCategory]);
-
-  const categories = ["all", "UPSC", "SSC", "ISRO", "GATE", "RRB", "DRDO", "State PSC"];
+  const categories = ["all", "UPSC", "SSC", "ISRO", "GATE", "RRB", "DRDO", "State PSC", "Banking"];
 
   return (
     <AppLayout>
@@ -50,7 +41,7 @@ export default function ExaminationsPage() {
               My Examinations
             </h1>
             <Badge variant="outline" className="text-slate-400 border-[#232a3e]">
-              {filteredExams.length} Total
+              {filteredExaminations.length} Active Records
             </Badge>
           </div>
           <p className="text-xs md:text-sm text-slate-400">
@@ -58,7 +49,11 @@ export default function ExaminationsPage() {
           </p>
         </div>
 
-        <Button size="sm" className="gap-2 bg-indigo-600 hover:bg-indigo-500 font-semibold shadow-sm w-fit">
+        <Button
+          size="sm"
+          onClick={() => setIsQuickAddOpen(true)}
+          className="gap-2 bg-indigo-600 hover:bg-indigo-500 font-semibold shadow-sm w-fit cursor-pointer"
+        >
           <Plus className="w-4 h-4" />
           Add Examination
         </Button>
@@ -72,8 +67,8 @@ export default function ExaminationsPage() {
             <Input
               type="text"
               placeholder="Search by exam name, post, registration number or organization..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9 bg-[#0d1017] border-[#20283c] text-xs"
             />
           </div>
@@ -83,7 +78,7 @@ export default function ExaminationsPage() {
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
                   selectedCategory === cat
                     ? "bg-indigo-600 text-white"
                     : "bg-[#0d1017] text-slate-400 hover:text-white border border-[#1e2536]"
@@ -92,20 +87,44 @@ export default function ExaminationsPage() {
                 {cat === "all" ? "All Categories" : cat}
               </button>
             ))}
+
+            {(searchQuery || selectedCategory !== "all") && (
+              <button
+                onClick={() => {
+                  setSearchQuery("");
+                  setSelectedCategory("all");
+                }}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-slate-400 hover:text-amber-300 bg-[#0d1017] border border-[#1e2536] text-xs transition-colors"
+                title="Reset filters"
+              >
+                <RotateCcw className="w-3 h-3" />
+                Reset
+              </button>
+            )}
           </div>
         </div>
       </div>
 
       {/* Examinations List View */}
       <div className="space-y-3">
-        {filteredExams.length === 0 ? (
+        {filteredExaminations.length === 0 ? (
           <div className="p-12 text-center rounded-xl bg-[#121620] border border-[#1e2536]">
             <GraduationCap className="w-10 h-10 text-slate-600 mx-auto mb-3" />
             <h3 className="text-sm font-semibold text-slate-300">No examinations found</h3>
-            <p className="text-xs text-slate-500 mt-1">Try adjusting your search or category filter.</p>
+            <p className="text-xs text-slate-500 mt-1 mb-4">
+              Try adjusting your search criteria or add a new examination to your vault.
+            </p>
+            <Button
+              size="sm"
+              onClick={() => setIsQuickAddOpen(true)}
+              className="bg-indigo-600 hover:bg-indigo-500 gap-1.5 text-xs font-semibold"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Add Examination Now
+            </Button>
           </div>
         ) : (
-          filteredExams.map((exam) => (
+          filteredExaminations.map((exam) => (
             <Card
               key={exam.id}
               className="bg-[#121620] border-[#1e2536] hover:border-indigo-500/40 hover:bg-[#131825] transition-all"

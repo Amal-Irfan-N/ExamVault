@@ -11,8 +11,8 @@ import {
   Calendar,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { LiveProgressModal } from "@/components/progress/live-progress-modal";
+import { useExaminations } from "@/context/ExaminationContext";
 
 interface TopbarProps {
   onToggleMobileMenu: () => void;
@@ -20,8 +20,8 @@ interface TopbarProps {
 }
 
 export function Topbar({ onToggleMobileMenu, isMobileMenuOpen }: TopbarProps) {
-  const [searchQuery, setSearchQuery] = useState("");
   const [isProgressOpen, setIsProgressOpen] = useState(false);
+  const { setIsCommandPaletteOpen, setIsQuickAddOpen } = useExaminations();
 
   return (
     <>
@@ -49,24 +49,32 @@ export function Topbar({ onToggleMobileMenu, isMobileMenuOpen }: TopbarProps) {
             </span>
           </div>
 
-          {/* Global Search bar on Desktop */}
-          <div className="hidden md:flex items-center relative w-72 lg:w-96">
-            <Search className="w-4 h-4 absolute left-3 text-slate-500 pointer-events-none" />
-            <Input
-              type="text"
-              placeholder="Search examinations, reg. numbers, orgs..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 pr-4 py-1.5 h-9 bg-[#121620] border-[#222a3d] text-xs text-slate-200 placeholder:text-slate-500 rounded-lg focus-visible:ring-1 focus-visible:ring-indigo-500"
-            />
-            <kbd className="hidden lg:inline-flex absolute right-2.5 top-2 text-[10px] font-mono text-slate-500 bg-[#1a2133] px-1.5 py-0.5 rounded border border-[#26314a]">
+          {/* Global Search Bar (Triggers Command Palette ⌘K) */}
+          <button
+            onClick={() => setIsCommandPaletteOpen(true)}
+            className="hidden md:flex items-center justify-between w-72 lg:w-96 px-3 py-1.5 h-9 bg-[#121620] hover:bg-[#161b29] border border-[#222a3d] hover:border-[#2f3a52] rounded-lg text-xs text-slate-400 transition-colors cursor-pointer group text-left"
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              <Search className="w-4 h-4 text-slate-500 group-hover:text-indigo-400 transition-colors" />
+              <span className="truncate">Search exams, registration IDs, orgs...</span>
+            </div>
+            <kbd className="hidden lg:inline-flex text-[10px] font-mono text-slate-400 bg-[#1a2133] px-1.5 py-0.5 rounded border border-[#26314a]">
               ⌘K
             </kbd>
-          </div>
+          </button>
         </div>
 
         {/* Right side: Actions, Notifications, Profile */}
         <div className="flex items-center gap-2 md:gap-3">
+          {/* Mobile Search Trigger Icon */}
+          <button
+            onClick={() => setIsCommandPaletteOpen(true)}
+            className="md:hidden p-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#161c28] transition-colors"
+            title="Search"
+          >
+            <Search className="w-4 h-4" />
+          </button>
+
           {/* Live Progress Tracker Button */}
           <button
             onClick={() => setIsProgressOpen(true)}
@@ -74,9 +82,9 @@ export function Topbar({ onToggleMobileMenu, isMobileMenuOpen }: TopbarProps) {
             title="Click to view full Live Progress Tracker"
           >
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="font-semibold text-white group-hover:text-indigo-200">Live Progress</span>
+            <span className="font-semibold text-white group-hover:text-indigo-200 hidden sm:inline">Live Progress</span>
             <span className="text-[10px] text-indigo-400 bg-indigo-500/20 px-1.5 py-0.2 rounded font-mono">
-              Stage 1
+              Stage 2
             </span>
           </button>
 
@@ -100,13 +108,15 @@ export function Topbar({ onToggleMobileMenu, isMobileMenuOpen }: TopbarProps) {
           </Link>
 
           {/* Add Exam Quick Button */}
-          <Link href="/examinations?action=new">
-            <Button size="sm" className="gap-1.5 text-xs font-semibold h-8 px-3">
-              <Plus className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Add Examination</span>
-              <span className="sm:hidden">Add</span>
-            </Button>
-          </Link>
+          <Button
+            size="sm"
+            onClick={() => setIsQuickAddOpen(true)}
+            className="gap-1.5 text-xs font-semibold h-8 px-3 cursor-pointer bg-indigo-600 hover:bg-indigo-500 shadow-sm"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Add Examination</span>
+            <span className="sm:hidden">Add</span>
+          </Button>
 
           {/* User Avatar */}
           <Link
