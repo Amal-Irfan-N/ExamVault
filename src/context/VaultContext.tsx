@@ -15,6 +15,7 @@ import {
   base64ToBuffer,
   bufferToBase64,
 } from "@/lib/crypto/vault-crypto";
+import { examVaultDB, LocalEncryptedCredential } from "@/lib/db/indexed-db";
 
 interface VaultContextType {
   isVaultSetup: boolean;
@@ -214,6 +215,17 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
 
       localStorage.setItem(RECORDS_STORAGE_KEY, JSON.stringify(encryptedRecords));
 
+      // Persist encrypted records into IndexedDB
+      const dexieCreds: LocalEncryptedCredential[] = encryptedRecords.map((r) => ({
+        id: r.id,
+        iv: r.iv,
+        salt: r.salt,
+        ciphertext: r.ciphertext,
+        updatedAt: r.updatedAt,
+        syncStatus: "synced",
+      }));
+      examVaultDB.credentials.bulkPut(dexieCreds).catch((e) => console.warn("Dexie credentials put error:", e));
+
       // Unlock immediately
       activeKeyRef.current = masterKey;
       setCredentials(
@@ -341,6 +353,33 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
     list.unshift(newRecord);
     localStorage.setItem(RECORDS_STORAGE_KEY, JSON.stringify(list));
 
+    // Save encrypted record into IndexedDB
+    examVaultDB.credentials
+      .put({
+        id: newRecord.id,
+        iv: newRecord.iv,
+        salt: newRecord.salt,
+        ciphertext: newRecord.ciphertext,
+        updatedAt: newRecord.updatedAt,
+        syncStatus: "synced",
+      })
+      .catch((e) => console.warn("Dexie put credential error:", e));
+
+    if (typeof window !== "undefined" && !navigator.onLine) {
+      examVaultDB.offlineMutations
+        .add({
+          id: `mut-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+          entity: "credential",
+          entityId: newRecord.id,
+          action: "create",
+          payload: { id: newRecord.id, org: newRecord.org, portalName: newRecord.portalName },
+          timestamp: Date.now(),
+          status: "pending",
+          retryCount: 0,
+        })
+        .catch((e) => console.warn("Failed to queue offline credential mutation:", e));
+    }
+
     // Update decrypted state
     const newDecrypted: VaultCredential = {
       ...credData,
@@ -395,6 +434,31 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
     );
     localStorage.setItem(RECORDS_STORAGE_KEY, JSON.stringify(updatedList));
 
+    // Update in IndexedDB
+    examVaultDB.credentials
+      .update(id, {
+        ciphertext: encrypted.ciphertext,
+        iv: encrypted.iv,
+        salt: encrypted.salt,
+        updatedAt: merged.updatedAt,
+      })
+      .catch((e) => console.warn("Dexie update credential error:", e));
+
+    if (typeof window !== "undefined" && !navigator.onLine) {
+      examVaultDB.offlineMutations
+        .add({
+          id: `mut-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+          entity: "credential",
+          entityId: id,
+          action: "update",
+          payload: { id, org: merged.org, portalName: merged.portalName },
+          timestamp: Date.now(),
+          status: "pending",
+          retryCount: 0,
+        })
+        .catch((e) => console.warn("Failed to queue offline credential update:", e));
+    }
+
     // Update decrypted state
     setCredentials((prev) => prev.map((c) => (c.id === id ? merged : c)));
     resetAutoLockTimer();
@@ -405,6 +469,23 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
     const list: EncryptedCredentialRecord[] = stored ? JSON.parse(stored) : [];
     const filtered = list.filter((item) => item.id !== id);
     localStorage.setItem(RECORDS_STORAGE_KEY, JSON.stringify(filtered));
+
+    examVaultDB.credentials.delete(id).catch((e) => console.warn("Dexie delete credential error:", e));
+
+    if (typeof window !== "undefined" && !navigator.onLine) {
+      examVaultDB.offlineMutations
+        .add({
+          id: `mut-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+          entity: "credential",
+          entityId: id,
+          action: "delete",
+          payload: { id },
+          timestamp: Date.now(),
+          status: "pending",
+          retryCount: 0,
+        })
+        .catch((e) => console.warn("Failed to queue offline credential delete:", e));
+    }
 
     setCredentials((prev) => prev.filter((c) => c.id !== id));
     resetAutoLockTimer();

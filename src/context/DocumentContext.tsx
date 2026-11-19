@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useMemo } from "react";
 import { VaultDocument } from "@/types/document";
+import { examVaultDB, seedDatabaseIfEmpty, LocalDocument } from "@/lib/db/indexed-db";
 
 interface DocumentContextType {
   documents: VaultDocument[];
@@ -133,12 +134,47 @@ export function DocumentProvider({ children }: { children: React.ReactNode }) {
     return INITIAL_MOCK_DOCUMENTS;
   });
 
-  // Save to localStorage whenever documents change
+  // Load from IndexedDB on initial mount
+  useEffect(() => {
+    async function loadDocumentsFromIndexedDB() {
+      try {
+        const stored = await examVaultDB.documents.toArray();
+        if (stored.length > 0) {
+          const list = stored.map((item) => (item.fullData ? item.fullData : item));
+          setDocuments(list as unknown as VaultDocument[]);
+        } else {
+          await seedDatabaseIfEmpty([], INITIAL_MOCK_DOCUMENTS, []);
+        }
+      } catch (err) {
+        console.warn("IndexedDB document load error, fallback to localStorage:", err);
+      }
+    }
+    loadDocumentsFromIndexedDB();
+  }, []);
+
+  // Save to localStorage and IndexedDB (Dexie) whenever documents change
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(documents));
+      const localDocs: LocalDocument[] = documents.map((doc) => ({
+        id: doc.id,
+        examId: doc.examId,
+        category: doc.category,
+        title: doc.title,
+        fileName: doc.fileName,
+        fileType: doc.fileType,
+        fileSize: doc.fileSize,
+        fileSizeFormatted: doc.fileSizeFormatted,
+        fileUrl: doc.fileUrl,
+        notes: doc.notes,
+        createdAt: doc.createdAt,
+        updatedAt: doc.updatedAt,
+        syncStatus: "synced",
+        fullData: doc,
+      }));
+      examVaultDB.documents.bulkPut(localDocs).catch((e) => console.warn("Dexie bulkPut documents error:", e));
     } catch (e) {
-      console.warn("Failed to persist documents to localStorage:", e);
+      console.warn("Failed to persist documents:", e);
     }
   }, [documents]);
 
@@ -151,6 +187,21 @@ export function DocumentProvider({ children }: { children: React.ReactNode }) {
       updatedAt: now,
     };
     setDocuments((prev) => [newDoc, ...prev]);
+
+    if (typeof window !== "undefined" && !navigator.onLine) {
+      examVaultDB.offlineMutations
+        .add({
+          id: `mut-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+          entity: "document",
+          entityId: newDoc.id,
+          action: "create",
+          payload: newDoc,
+          timestamp: Date.now(),
+          status: "pending",
+          retryCount: 0,
+        })
+        .catch((e) => console.warn("Failed to queue offline document mutation:", e));
+    }
   };
 
   const updateDocument = (id: string, updates: Partial<VaultDocument>) => {
@@ -158,6 +209,21 @@ export function DocumentProvider({ children }: { children: React.ReactNode }) {
     setDocuments((prev) =>
       prev.map((d) => (d.id === id ? { ...d, ...updates, updatedAt: now } : d))
     );
+
+    if (typeof window !== "undefined" && !navigator.onLine) {
+      examVaultDB.offlineMutations
+        .add({
+          id: `mut-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+          entity: "document",
+          entityId: id,
+          action: "update",
+          payload: updates,
+          timestamp: Date.now(),
+          status: "pending",
+          retryCount: 0,
+        })
+        .catch((e) => console.warn("Failed to queue offline document update mutation:", e));
+    }
   };
 
   const renameDocument = (id: string, newTitle: string) => {
@@ -167,6 +233,23 @@ export function DocumentProvider({ children }: { children: React.ReactNode }) {
 
   const deleteDocument = (id: string) => {
     setDocuments((prev) => prev.filter((d) => d.id !== id));
+    examVaultDB.documents.delete(id).catch((e) => console.warn("Dexie delete document error:", e));
+    examVaultDB.cachedBlobs.delete(id).catch(() => {});
+
+    if (typeof window !== "undefined" && !navigator.onLine) {
+      examVaultDB.offlineMutations
+        .add({
+          id: `mut-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+          entity: "document",
+          entityId: id,
+          action: "delete",
+          payload: { id },
+          timestamp: Date.now(),
+          status: "pending",
+          retryCount: 0,
+        })
+        .catch((e) => console.warn("Failed to queue offline document delete mutation:", e));
+    }
   };
 
   const getDocumentsByExam = (examId: string) => {

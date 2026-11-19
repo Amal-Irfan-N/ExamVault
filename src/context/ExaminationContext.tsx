@@ -15,6 +15,7 @@ import {
   getUpcomingDeadlines,
   getUpcomingExamDates,
 } from "@/data/mockExaminations";
+import { examVaultDB, seedDatabaseIfEmpty, LocalExamination } from "@/lib/db/indexed-db";
 
 interface ExaminationContextType {
   examinations: Examination[];
@@ -66,10 +67,50 @@ export function ExaminationProvider({ children }: { children: React.ReactNode })
   const [isQuickAddOpen, setIsQuickAddOpen] = useState<boolean>(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState<boolean>(false);
 
-  // Sync with client localStorage
+  // Load from IndexedDB on initial mount
+  useEffect(() => {
+    async function loadFromIndexedDB() {
+      try {
+        const stored = await examVaultDB.examinations.toArray();
+        if (stored.length > 0) {
+          const list = stored.map((item) => (item.fullData ? item.fullData : item));
+          setExaminations(list as unknown as Examination[]);
+        } else {
+          await seedDatabaseIfEmpty(INITIAL_MOCK_EXAMINATIONS, [], []);
+        }
+      } catch (err) {
+        console.warn("IndexedDB load error, fallback to localStorage:", err);
+      }
+    }
+    loadFromIndexedDB();
+  }, []);
+
+  // Sync with client localStorage and IndexedDB (Dexie)
   useEffect(() => {
     if (typeof window !== "undefined") {
       localStorage.setItem("examvault_exams", JSON.stringify(examinations));
+      try {
+        const localItems: LocalExamination[] = examinations.map((exam) => ({
+          id: exam.id,
+          examName: exam.examName,
+          recruitingOrg: exam.recruitingOrg,
+          category: exam.category,
+          postName: exam.postName,
+          advertisementNumber: exam.advertisementNumber,
+          recruitmentYear: exam.recruitmentYear,
+          applicationStatus: exam.status,
+          paymentStatus: exam.paymentStatus,
+          examDate: exam.examDate?.date || undefined,
+          dateCertainty: exam.examDate?.certainty || undefined,
+          isArchived: exam.isArchived || false,
+          updatedAt: exam.updatedAt || new Date().toISOString(),
+          syncStatus: "synced",
+          fullData: exam,
+        }));
+        examVaultDB.examinations.bulkPut(localItems).catch((e) => console.warn("Dexie bulkPut warning:", e));
+      } catch (e) {
+        console.warn("IndexedDB sync error:", e);
+      }
     }
   }, [examinations]);
 
@@ -96,6 +137,22 @@ export function ExaminationProvider({ children }: { children: React.ReactNode })
 
     setExaminations((prev) => [newExam, ...prev]);
 
+    // Queue offline mutation if currently disconnected
+    if (typeof window !== "undefined" && !navigator.onLine) {
+      examVaultDB.offlineMutations
+        .add({
+          id: `mut-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+          entity: "examination",
+          entityId: newExam.id,
+          action: "create",
+          payload: newExam,
+          timestamp: Date.now(),
+          status: "pending",
+          retryCount: 0,
+        })
+        .catch((e) => console.warn("Failed to queue offline mutation:", e));
+    }
+
     // Add activity record
     const newActivity: ExamActivity = {
       id: `act-${Date.now()}`,
@@ -115,10 +172,41 @@ export function ExaminationProvider({ children }: { children: React.ReactNode })
     setExaminations((prev) =>
       prev.map((exam) => (exam.id === id ? { ...exam, ...updates, updatedAt: new Date().toISOString() } : exam))
     );
+
+    if (typeof window !== "undefined" && !navigator.onLine) {
+      examVaultDB.offlineMutations
+        .add({
+          id: `mut-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+          entity: "examination",
+          entityId: id,
+          action: "update",
+          payload: updates,
+          timestamp: Date.now(),
+          status: "pending",
+          retryCount: 0,
+        })
+        .catch((e) => console.warn("Failed to queue offline update mutation:", e));
+    }
   };
 
   const deleteExamination = (id: string) => {
     setExaminations((prev) => prev.filter((exam) => exam.id !== id));
+    examVaultDB.examinations.delete(id).catch((e) => console.warn("IndexedDB delete error:", e));
+
+    if (typeof window !== "undefined" && !navigator.onLine) {
+      examVaultDB.offlineMutations
+        .add({
+          id: `mut-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+          entity: "examination",
+          entityId: id,
+          action: "delete",
+          payload: { id },
+          timestamp: Date.now(),
+          status: "pending",
+          retryCount: 0,
+        })
+        .catch((e) => console.warn("Failed to queue offline delete mutation:", e));
+    }
   };
 
   // Filtered examinations

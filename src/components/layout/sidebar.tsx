@@ -15,10 +15,12 @@ import {
   ShieldCheck,
   Sparkles,
   Layers,
+  Database,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/context/AuthContext";
+import { useOffline } from "@/context/OfflineContext";
 
 export const NAVIGATION_ITEMS = [
   {
@@ -73,7 +75,7 @@ export const NAVIGATION_ITEMS = [
     name: "Live Dev Progress",
     href: "/progress",
     icon: Layers,
-    badge: "Stage 3",
+    badge: "Stage 11",
   },
 ];
 
@@ -85,6 +87,7 @@ interface SidebarProps {
 export function Sidebar({ className, onNavigate }: SidebarProps) {
   const pathname = usePathname();
   const { profile, isConfigured, setIsAuthModalOpen } = useAuth();
+  const { effectiveOnline, pendingCount, setIsStorageModalOpen } = useOffline();
 
   const userInitials = profile?.fullName
     ? profile.fullName
@@ -178,23 +181,59 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
         })}
 
         {/* Live Progress Widget */}
-        <div className="pt-5 mt-4 border-t border-[#1a2133]">
+        <div className="pt-4 mt-3 border-t border-[#1a2133] space-y-2">
+          {/* Offline & Sync Status Trigger */}
+          <button
+            type="button"
+            onClick={() => setIsStorageModalOpen(true)}
+            className="w-full flex items-center justify-between p-2 rounded-lg bg-[#121622] hover:bg-[#161c2b] border border-[#1e2536] text-xs transition-all text-left group"
+          >
+            <div className="flex items-center gap-2">
+              <Database className="w-3.5 h-3.5 text-indigo-400" />
+              <div>
+                <span className="font-semibold text-slate-200 block text-[11px]">
+                  IndexedDB Storage
+                </span>
+                <span className="text-[10px] text-slate-400 flex items-center gap-1">
+                  {effectiveOnline ? (
+                    <>
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
+                      Online • Synced
+                    </>
+                  ) : (
+                    <>
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block animate-ping" />
+                      Offline Mode
+                    </>
+                  )}
+                </span>
+              </div>
+            </div>
+            {pendingCount > 0 ? (
+              <span className="px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 font-mono text-[10px]">
+                {pendingCount}
+              </span>
+            ) : (
+              <span className="text-[10px] text-slate-500 font-mono">Dexie v4</span>
+            )}
+          </button>
+
           <Link
             href="/progress"
             onClick={onNavigate}
-            className="block p-3 rounded-lg bg-[#121622] border border-[#1e2536] hover:border-indigo-500/40 text-xs transition-all group"
+            className="block p-2.5 rounded-lg bg-[#121622] border border-[#1e2536] hover:border-indigo-500/40 text-xs transition-all group"
           >
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="font-semibold text-slate-200 flex items-center gap-1.5 group-hover:text-indigo-300">
+            <div className="flex items-center justify-between mb-1">
+              <span className="font-semibold text-slate-200 flex items-center gap-1.5 group-hover:text-indigo-300 text-[11px]">
                 <Sparkles className="w-3.5 h-3.5 text-amber-400" />
                 Live Roadmap
               </span>
               <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
             </div>
-            <p className="text-slate-400 text-[11px] leading-relaxed mb-2">
-              Stage 3 PostgreSQL Schema & Supabase Auth configured.
+            <p className="text-slate-400 text-[10px] leading-relaxed mb-1">
+              Stage 11 IndexedDB & Offline Sync Active.
             </p>
-            <div className="flex items-center text-[11px] text-indigo-400 font-semibold group-hover:underline">
+            <div className="flex items-center text-[10px] text-indigo-400 font-semibold group-hover:underline">
               View In-App Progress →
             </div>
           </Link>

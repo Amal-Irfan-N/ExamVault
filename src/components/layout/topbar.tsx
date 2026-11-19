@@ -15,6 +15,8 @@ import { Button } from "@/components/ui/button";
 import { LiveProgressModal } from "@/components/progress/live-progress-modal";
 import { useExaminations } from "@/context/ExaminationContext";
 import { useAuth } from "@/context/AuthContext";
+import { useOffline } from "@/context/OfflineContext";
+import { Database, WifiOff } from "lucide-react";
 
 interface TopbarProps {
   onToggleMobileMenu: () => void;
@@ -25,6 +27,7 @@ export function Topbar({ onToggleMobileMenu, isMobileMenuOpen }: TopbarProps) {
   const [isProgressOpen, setIsProgressOpen] = useState(false);
   const { setIsCommandPaletteOpen, setIsQuickAddOpen } = useExaminations();
   const { profile, setIsAuthModalOpen } = useAuth();
+  const { effectiveOnline, pendingCount, setIsStorageModalOpen } = useOffline();
 
   const userInitials = profile?.fullName
     ? profile.fullName
@@ -87,6 +90,29 @@ export function Topbar({ onToggleMobileMenu, isMobileMenuOpen }: TopbarProps) {
             <Search className="w-4 h-4" />
           </button>
 
+          {/* Offline / Storage Status Button */}
+          <button
+            type="button"
+            onClick={() => setIsStorageModalOpen(true)}
+            className={`relative p-2 rounded-lg transition-colors border ${
+              effectiveOnline
+                ? "bg-[#121620] text-slate-400 hover:text-white border-[#1e2536] hover:border-slate-700"
+                : "bg-amber-950/60 text-amber-300 border-amber-700/60"
+            }`}
+            title="Local Storage & Offline Synchronization (Dexie IndexedDB)"
+          >
+            {effectiveOnline ? (
+              <Database className="w-4 h-4 text-indigo-400" />
+            ) : (
+              <WifiOff className="w-4 h-4 text-amber-400" />
+            )}
+            {pendingCount > 0 && (
+              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500 text-[9px] font-bold text-slate-950 flex items-center justify-center font-mono">
+                {pendingCount}
+              </span>
+            )}
+          </button>
+
           {/* Live Progress Tracker Button */}
           <button
             onClick={() => setIsProgressOpen(true)}
@@ -96,7 +122,7 @@ export function Topbar({ onToggleMobileMenu, isMobileMenuOpen }: TopbarProps) {
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
             <span className="font-semibold text-white group-hover:text-indigo-200 hidden sm:inline">Live Progress</span>
             <span className="text-[10px] text-indigo-400 bg-indigo-500/20 px-1.5 py-0.2 rounded font-mono">
-              Stage 3
+              Stage 11
             </span>
           </button>
 

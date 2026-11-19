@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Providers } from "./providers";
+import { OfflineStatusBanner } from "@/components/offline/offline-status-banner";
 
 export const metadata: Metadata = {
   title: "ExamVault — Examination Lifecycle & Management Platform",
@@ -33,7 +34,10 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark h-full antialiased">
       <body className="min-h-full bg-[#0b0d13] text-slate-100 flex flex-col font-sans">
-        <Providers>{children}</Providers>
+        <Providers>
+          <OfflineStatusBanner />
+          {children}
+        </Providers>
       </body>
     </html>
   );
