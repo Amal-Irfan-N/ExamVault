@@ -4,6 +4,7 @@ import React from "react";
 import { AuthProvider } from "@/context/AuthContext";
 import { ExaminationProvider } from "@/context/ExaminationContext";
 import { DocumentProvider } from "@/context/DocumentContext";
+import { VaultProvider } from "@/context/VaultContext";
 import { CommandPalette } from "@/components/navigation/command-palette";
 import { QuickAddModal } from "@/components/examinations/quick-add-modal";
 import { AuthModal } from "@/components/auth/auth-modal";
@@ -13,10 +14,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <AuthProvider>
       <ExaminationProvider>
         <DocumentProvider>
-          {children}
-          <CommandPalette />
-          <QuickAddModal />
-          <AuthModal />
+          <VaultProvider>
+            {children}
+            <CommandPalette />
+            <QuickAddModal />
+            <AuthModal />
+          </VaultProvider>
         </DocumentProvider>
       </ExaminationProvider>
     </AuthProvider>
