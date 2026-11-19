@@ -18,8 +18,8 @@ Last Updated: November 2026
 | **Stage 10** | **Exam discovery module (Verified official recruitment integration)** | **COMPLETED** | Curated catalog across 8 major recruiters (UPSC, SSC, RRB, DRDO, Banking, PSUs), multi-filters, one-click vault import. |
 | **Stage 11** | **Local storage & offline functionality (IndexedDB / Dexie.js)** | **COMPLETED** | Dexie.js v4 database (ExamVaultDB), 6 stores, offline mutation queue, storage quota tracker, offline simulation mode. |
 | **Stage 12** | **Cloud synchronization (Conflict handling, queue, offline-first)** | **COMPLETED** | Bi-directional sync engine (runCloudSync), FIFO mutation replay, Last-Write-Wins conflict resolution, audit log. |
-| **Stage 13** | PWA installation & notifications (Manifest, Service Worker, Android support) | **IN PROGRESS** | manifest.webmanifest, service worker caching, Android installation prompt, Web Push subscription. |
-| **Stage 14** | Testing, security review, audits & production deployment | **PENDING** | ESLint & production build pipeline established. |
+| **Stage 13** | **PWA installation & notifications (Manifest, Service Worker, Android support)** | **COMPLETED** | Web App Manifest, Service Worker (sw.js), offline.html fallback, Android install banner, Web Push API. |
+| **Stage 14** | Testing, security review, audits & production deployment | **IN PROGRESS** | Production build verification, zero-knowledge security audit, and GitHub sync. |
 
 ---
 

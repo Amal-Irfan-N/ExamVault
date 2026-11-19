@@ -2,12 +2,18 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Providers } from "./providers";
 import { OfflineStatusBanner } from "@/components/offline/offline-status-banner";
+import { PWAInstallPrompt } from "@/components/pwa/pwa-install-prompt";
 
 export const metadata: Metadata = {
   title: "ExamVault — Examination Lifecycle & Management Platform",
   description:
     "Personal examination management platform for competitive, government and recruitment examinations. Track notifications, deadlines, hall tickets, credentials, and results.",
   applicationName: "ExamVault",
+  manifest: "/manifest.webmanifest",
+  icons: {
+    icon: "/icons/icon-192.svg",
+    apple: "/icons/icon-192.svg",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
@@ -37,6 +43,7 @@ export default function RootLayout({
         <Providers>
           <OfflineStatusBanner />
           {children}
+          <PWAInstallPrompt />
         </Providers>
       </body>
     </html>

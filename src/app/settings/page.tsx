@@ -9,6 +9,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/context/AuthContext";
 import { useOffline } from "@/context/OfflineContext";
 import { useExaminations } from "@/context/ExaminationContext";
+import { triggerLocalPushNotification } from "@/lib/notifications/push-notification-service";
 import {
   User,
   Shield,
@@ -40,10 +41,25 @@ export default function SettingsPage() {
   const [reminderDays, setReminderDays] = useState("30, 15, 7, 3, 1");
   const [autoLockMinutes, setAutoLockMinutes] = useState("15");
   const [isSaved, setIsSaved] = useState(false);
+  const [pushStatus, setPushStatus] = useState<string | null>(null);
 
   const handleSave = () => {
     setIsSaved(true);
     setTimeout(() => setIsSaved(false), 2000);
+  };
+
+  const handleTestPush = async () => {
+    setPushStatus("Dispatching...");
+    const success = await triggerLocalPushNotification("UPSC CSE 2026 — Admit Card Available", {
+      body: "Official hall ticket for Civil Services Preliminary Exam 2026 has been published. Download now from ExamVault.",
+      url: "/examinations",
+    });
+    if (success) {
+      setPushStatus("Notification dispatched!");
+    } else {
+      setPushStatus("Permission needed or blocked in browser settings.");
+    }
+    setTimeout(() => setPushStatus(null), 4000);
   };
 
   const handleExportBackup = () => {
@@ -232,11 +248,29 @@ export default function SettingsPage() {
                 Comma-separated days before examination or deadline.
               </span>
             </div>
-            <div className="flex items-center justify-between p-2.5 rounded-lg bg-[#0d1017] border border-[#1e2536]">
-              <span className="text-slate-300">Web Push Notifications</span>
-              <Badge variant="outline" className="text-indigo-400 border-indigo-500/30">
-                PWA Enabled
-              </Badge>
+            <div className="space-y-2 p-2.5 rounded-lg bg-[#0d1017] border border-[#1e2536]">
+              <div className="flex items-center justify-between">
+                <span className="text-slate-300">Web Push Notifications</span>
+                <Badge variant="outline" className="text-indigo-400 border-indigo-500/30">
+                  PWA Ready
+                </Badge>
+              </div>
+              <div className="flex items-center justify-between pt-1">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleTestPush}
+                  className="h-7 text-[11px] gap-1.5 border-slate-700 hover:bg-slate-800 text-slate-200"
+                >
+                  <Bell className="w-3 h-3 text-amber-400" />
+                  Test Push Alert
+                </Button>
+                {pushStatus && (
+                  <span className="text-[10px] text-indigo-300 font-mono animate-fadeIn truncate max-w-[180px]">
+                    {pushStatus}
+                  </span>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>
