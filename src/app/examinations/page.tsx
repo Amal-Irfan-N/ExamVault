@@ -1,8 +1,10 @@
 "use client";
 
-import React from "react";
+import React, { useState, useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 import { AppLayout } from "@/components/layout/app-layout";
 import { useExaminations } from "@/context/ExaminationContext";
+import { Examination, ExamStatus } from "@/types/examination";
 import { StatusBadge, CertaintyBadge } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,19 +19,101 @@ import {
   ExternalLink,
   Hash,
   RotateCcw,
+  Edit,
+  Trash2,
+  Archive,
+  Eye,
 } from "lucide-react";
+import { ExamDetailsModal } from "@/components/examinations/exam-details-modal";
+import { EditExamModal } from "@/components/examinations/edit-exam-modal";
+import { DeleteConfirmModal } from "@/components/examinations/delete-confirm-modal";
 
-export default function ExaminationsPage() {
+function ExaminationsContent() {
+  const searchParams = useSearchParams();
+  const examIdParam = searchParams.get("id");
+
   const {
-    filteredExaminations,
+    examinations,
     searchQuery,
     setSearchQuery,
     selectedCategory,
     setSelectedCategory,
     setIsQuickAddOpen,
+    updateExamination,
+    deleteExamination,
   } = useExaminations();
 
+  const [activeTab, setActiveTab] = useState<"active" | "archived">("active");
+  const [selectedExamForDetails, setSelectedExamForDetails] = useState<Examination | null>(null);
+  const [selectedExamForEdit, setSelectedExamForEdit] = useState<Examination | null>(null);
+  const [selectedExamForDelete, setSelectedExamForDelete] = useState<Examination | null>(null);
+  const [isDetailsDismissed, setIsDetailsDismissed] = useState(false);
+
+  // Auto-open modal if ?id= is in query string and user has not dismissed it
+  const activeExamForDetails = useMemo(() => {
+    if (selectedExamForDetails) return selectedExamForDetails;
+    if (!isDetailsDismissed && examIdParam) {
+      return examinations.find((e) => e.id === examIdParam) || null;
+    }
+    return null;
+  }, [selectedExamForDetails, isDetailsDismissed, examIdParam, examinations]);
+
   const categories = ["all", "UPSC", "SSC", "ISRO", "GATE", "RRB", "DRDO", "State PSC", "Banking"];
+
+  // Filter examinations based on tab (active vs archived), category, and search query
+  const displayedExams = useMemo(() => {
+    return examinations.filter((exam) => {
+      // Tab filter
+      if (activeTab === "active" && exam.isArchived) return false;
+      if (activeTab === "archived" && !exam.isArchived) return false;
+
+      // Category filter
+      if (selectedCategory !== "all" && exam.category !== selectedCategory) {
+        return false;
+      }
+
+      // Search filter
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const matches =
+          exam.examName.toLowerCase().includes(q) ||
+          exam.recruitingOrg.toLowerCase().includes(q) ||
+          exam.postName.toLowerCase().includes(q) ||
+          (exam.registrationNumber && exam.registrationNumber.toLowerCase().includes(q)) ||
+          (exam.applicationNumber && exam.applicationNumber.toLowerCase().includes(q));
+        if (!matches) return false;
+      }
+
+      return true;
+    });
+  }, [examinations, activeTab, selectedCategory, searchQuery]);
+
+  const activeCount = examinations.filter((e) => !e.isArchived).length;
+  const archivedCount = examinations.filter((e) => e.isArchived).length;
+
+  const handleToggleArchive = (exam: Examination) => {
+    updateExamination(exam.id, { isArchived: !exam.isArchived });
+    if (selectedExamForDetails?.id === exam.id) {
+      setSelectedExamForDetails({ ...exam, isArchived: !exam.isArchived });
+    }
+  };
+
+  const handleUpdateStatus = (examId: string, newStatus: ExamStatus) => {
+    updateExamination(examId, { status: newStatus });
+    if (selectedExamForDetails?.id === examId) {
+      setSelectedExamForDetails((prev) => (prev ? { ...prev, status: newStatus } : null));
+    }
+  };
+
+  const handleDeleteConfirm = () => {
+    if (selectedExamForDelete) {
+      deleteExamination(selectedExamForDelete.id);
+      setSelectedExamForDelete(null);
+      if (selectedExamForDetails?.id === selectedExamForDelete.id) {
+        setSelectedExamForDetails(null);
+      }
+    }
+  };
 
   return (
     <AppLayout>
@@ -41,7 +125,7 @@ export default function ExaminationsPage() {
               My Examinations
             </h1>
             <Badge variant="outline" className="text-slate-400 border-[#232a3e]">
-              {filteredExaminations.length} Active Records
+              {displayedExams.length} Records
             </Badge>
           </div>
           <p className="text-xs md:text-sm text-slate-400">
@@ -57,6 +141,37 @@ export default function ExaminationsPage() {
           <Plus className="w-4 h-4" />
           Add Examination
         </Button>
+      </div>
+
+      {/* Tab Switcher: Active vs Archived */}
+      <div className="flex items-center gap-2 border-b border-[#1e2536] text-xs">
+        <button
+          onClick={() => setActiveTab("active")}
+          className={`pb-2.5 px-3 font-semibold border-b-2 transition-colors cursor-pointer flex items-center gap-2 ${
+            activeTab === "active"
+              ? "border-indigo-500 text-white"
+              : "border-transparent text-slate-400 hover:text-white"
+          }`}
+        >
+          <span>Active Examinations</span>
+          <span className="text-[10px] bg-[#1a2133] px-1.5 py-0.2 rounded-full text-slate-300">
+            {activeCount}
+          </span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("archived")}
+          className={`pb-2.5 px-3 font-semibold border-b-2 transition-colors cursor-pointer flex items-center gap-2 ${
+            activeTab === "archived"
+              ? "border-indigo-500 text-white"
+              : "border-transparent text-slate-400 hover:text-white"
+          }`}
+        >
+          <span>Archived Records</span>
+          <span className="text-[10px] bg-[#1a2133] px-1.5 py-0.2 rounded-full text-slate-300">
+            {archivedCount}
+          </span>
+        </button>
       </div>
 
       {/* Filter and Search Bar */}
@@ -107,24 +222,30 @@ export default function ExaminationsPage() {
 
       {/* Examinations List View */}
       <div className="space-y-3">
-        {filteredExaminations.length === 0 ? (
+        {displayedExams.length === 0 ? (
           <div className="p-12 text-center rounded-xl bg-[#121620] border border-[#1e2536]">
             <GraduationCap className="w-10 h-10 text-slate-600 mx-auto mb-3" />
-            <h3 className="text-sm font-semibold text-slate-300">No examinations found</h3>
+            <h3 className="text-sm font-semibold text-slate-300">
+              {activeTab === "active" ? "No active examinations found" : "No archived records"}
+            </h3>
             <p className="text-xs text-slate-500 mt-1 mb-4">
-              Try adjusting your search criteria or add a new examination to your vault.
+              {activeTab === "active"
+                ? "Add a new examination to your vault or adjust your search filter."
+                : "Completed examinations you archive will appear here for historical reference."}
             </p>
-            <Button
-              size="sm"
-              onClick={() => setIsQuickAddOpen(true)}
-              className="bg-indigo-600 hover:bg-indigo-500 gap-1.5 text-xs font-semibold"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              Add Examination Now
-            </Button>
+            {activeTab === "active" && (
+              <Button
+                size="sm"
+                onClick={() => setIsQuickAddOpen(true)}
+                className="bg-indigo-600 hover:bg-indigo-500 gap-1.5 text-xs font-semibold"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                Add Examination Now
+              </Button>
+            )}
           </div>
         ) : (
-          filteredExaminations.map((exam) => (
+          displayedExams.map((exam) => (
             <Card
               key={exam.id}
               className="bg-[#121620] border-[#1e2536] hover:border-indigo-500/40 hover:bg-[#131825] transition-all"
@@ -142,6 +263,11 @@ export default function ExaminationsPage() {
                       </Badge>
                       <span className="text-xs text-slate-500">Year {exam.recruitmentYear}</span>
                       <StatusBadge status={exam.status} />
+                      {exam.isArchived && (
+                        <Badge variant="secondary" className="text-[10px]">
+                          Archived
+                        </Badge>
+                      )}
                     </div>
 
                     <h3 className="text-base font-bold text-white tracking-tight">
@@ -187,20 +313,64 @@ export default function ExaminationsPage() {
                   </div>
 
                   {/* Right Column: Actions */}
-                  <div className="flex items-center gap-2 lg:flex-col lg:items-end flex-shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-[#1a2133]">
+                  <div className="flex flex-wrap items-center gap-2 lg:flex-col lg:items-end flex-shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-[#1a2133]">
+                    <div className="flex items-center gap-1.5">
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => {
+                          setIsDetailsDismissed(false);
+                          setSelectedExamForDetails(exam);
+                        }}
+                        className="text-xs h-8 px-2.5 gap-1 text-slate-200 hover:text-white cursor-pointer"
+                        title="View Full Details"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        Details
+                      </Button>
+
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setSelectedExamForEdit(exam)}
+                        className="text-xs h-8 px-2.5 gap-1 text-indigo-400 hover:text-indigo-300"
+                        title="Edit Details"
+                      >
+                        <Edit className="w-3.5 h-3.5" />
+                        Edit
+                      </Button>
+
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleToggleArchive(exam)}
+                        className="text-xs h-8 px-2 text-slate-400 hover:text-white"
+                        title={exam.isArchived ? "Unarchive" : "Archive"}
+                      >
+                        <Archive className="w-3.5 h-3.5" />
+                      </Button>
+
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setSelectedExamForDelete(exam)}
+                        className="text-xs h-8 px-2 text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                        title="Delete"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
+
                     {exam.officialApplicationUrl && (
                       <a
                         href={exam.officialApplicationUrl}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex items-center gap-1 text-xs text-indigo-400 hover:text-indigo-300 font-medium"
+                        className="inline-flex items-center gap-1 text-xs text-indigo-400 hover:text-indigo-300 font-medium mt-1"
                       >
                         Official Portal <ExternalLink className="w-3 h-3" />
                       </a>
                     )}
-                    <Button size="sm" variant="secondary" className="text-xs h-8 px-3">
-                      View Details
-                    </Button>
                   </div>
                 </div>
               </CardContent>
@@ -208,6 +378,61 @@ export default function ExaminationsPage() {
           ))
         )}
       </div>
+
+      {/* Examination Details Modal */}
+      <ExamDetailsModal
+        isOpen={Boolean(activeExamForDetails)}
+        exam={activeExamForDetails}
+        onEdit={(exam) => {
+          setSelectedExamForDetails(null);
+          setIsDetailsDismissed(true);
+          setSelectedExamForEdit(exam);
+        }}
+        onDelete={(exam) => {
+          setSelectedExamForDetails(null);
+          setIsDetailsDismissed(true);
+          setSelectedExamForDelete(exam);
+        }}
+        onToggleArchive={handleToggleArchive}
+        onUpdateStatus={handleUpdateStatus}
+        onClose={() => {
+          setSelectedExamForDetails(null);
+          setIsDetailsDismissed(true);
+        }}
+      />
+
+      {/* Edit Examination Modal */}
+      <EditExamModal
+        isOpen={Boolean(selectedExamForEdit)}
+        exam={selectedExamForEdit}
+        onSave={(id, updates) => {
+          updateExamination(id, updates);
+          setSelectedExamForEdit(null);
+        }}
+        onClose={() => setSelectedExamForEdit(null)}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmModal
+        isOpen={Boolean(selectedExamForDelete)}
+        examName={selectedExamForDelete?.examName || ""}
+        onConfirm={handleDeleteConfirm}
+        onClose={() => setSelectedExamForDelete(null)}
+      />
     </AppLayout>
+  );
+}
+
+export default function ExaminationsPage() {
+  return (
+    <React.Suspense
+      fallback={
+        <div className="min-h-screen bg-[#0b0d13] flex items-center justify-center text-slate-500 text-sm">
+          Loading examinations...
+        </div>
+      }
+    >
+      <ExaminationsContent />
+    </React.Suspense>
   );
 }
